@@ -1,3 +1,5 @@
+import os
+
 from PySide6.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -26,6 +28,18 @@ from utils.reference_manager import ReferenceManager
 
 from network.websocket_client import WebSocketClient
 
+from models.parameter import Parameter
+
+DEFAULT_REF_PATH = os.path.join(
+    os.path.dirname(
+        os.path.dirname(
+            os.path.abspath(__file__)
+        )
+    ),
+    "data",
+    "reference.json",
+)
+
 
 class MainWindow(QMainWindow):
 
@@ -38,6 +52,8 @@ class MainWindow(QMainWindow):
         self.websocket_client = WebSocketClient()
 
         self.tissue_widgets = []
+
+        self._load_default_reference()
 
         self._build_ui()
 
@@ -184,6 +200,24 @@ class MainWindow(QMainWindow):
             self.reference_manager.get_reference_config(),
         )
 
+    def _load_default_reference(self):
+
+        if not os.path.exists(DEFAULT_REF_PATH):
+            return
+
+        try:
+            self.reference_manager.load_reference(
+                DEFAULT_REF_PATH
+            )
+
+            JsonManager.load_json(
+                DEFAULT_REF_PATH,
+                self.config,
+            )
+
+        except Exception:
+            pass
+
     def _on_load_reference(self):
 
         path, _ = QFileDialog.getOpenFileName(
@@ -199,6 +233,11 @@ class MainWindow(QMainWindow):
         try:
             self.reference_manager.load_reference(
                 path
+            )
+
+            JsonManager.load_json(
+                path,
+                self.config,
             )
 
             QMessageBox.information(
@@ -227,14 +266,44 @@ class MainWindow(QMainWindow):
         if reply != QMessageBox.StandardButton.Yes:
             return
 
-        self.config = SimulationConfig()
+        ref_config = (
+            self.reference_manager.get_reference_config()
+        )
 
-        for widget in self.tissue_widgets:
-            widget.deleteLater()
+        if ref_config is not None:
 
-        self.tissue_widgets.clear()
+            for tissue in self.config.tissues:
 
-        self._populate_right_panel()
+                ref_tissue = ref_config.get_tissue(
+                    tissue.name
+                )
+
+                if ref_tissue is None:
+                    continue
+
+                tissue.family = ref_tissue.family
+
+                tissue.parameters = [
+                    Parameter(
+                        name=p.name,
+                        value=p.value,
+                        delta=0.01,
+                    )
+                    for p in ref_tissue.parameters
+                ]
+
+            self.config.update_depths()
+
+        else:
+
+            self.config = SimulationConfig()
+
+            for widget in self.tissue_widgets:
+                widget.deleteLater()
+
+            self.tissue_widgets.clear()
+
+            self._populate_right_panel()
 
         self.refresh_everything()
 

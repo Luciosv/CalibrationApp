@@ -32,6 +32,8 @@ class TissueWidget(QGroupBox):
 
         self.setTitle(tissue.name)
 
+        self.param_spinboxes = []
+
         self._build_ui()
 
         self.refresh_from_model()
@@ -131,6 +133,8 @@ class TissueWidget(QGroupBox):
             if widget is not None:
                 widget.deleteLater()
 
+        self.param_spinboxes.clear()
+
         # Add new widgets based on the selected family
         formula_class = FORMULAS.get(self.tissue.family)
 
@@ -160,6 +164,8 @@ class TissueWidget(QGroupBox):
                 param_layout.addWidget(spin_box)
 
                 self.parameters_layout.addLayout(param_layout)
+
+                self.param_spinboxes.append(spin_box)
 
     # --------------------------------------------------
     # Señales
@@ -197,7 +203,13 @@ class TissueWidget(QGroupBox):
             self.tissue.end_depth
         )
 
-        self.rebuild_parameter_widgets()
+        for i, spin_box in enumerate(self.param_spinboxes):
+            if i < len(self.tissue.parameters):
+                spin_box.blockSignals(True)
+                spin_box.setValue(
+                    self.tissue.parameters[i].value
+                )
+                spin_box.blockSignals(False)
 
     # --------------------------------------------------
     # UI -> Modelo
