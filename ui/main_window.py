@@ -9,6 +9,8 @@ from PySide6.QtWidgets import (
     QToolBar,
     QFileDialog,
     QMessageBox,
+    QLabel,
+    QSizePolicy,
 )
 
 from models.simulation_config import (
@@ -26,7 +28,7 @@ from ui.tissue_widget import (
 from utils.json_manager import JsonManager
 from utils.reference_manager import ReferenceManager
 
-from network.websocket_client import WebSocketClient
+from network.websocket_server import WebSocketServer
 
 from models.parameter import Parameter
 
@@ -49,7 +51,19 @@ class MainWindow(QMainWindow):
 
         self.config = SimulationConfig()
         self.reference_manager = ReferenceManager()
-        self.websocket_client = WebSocketClient()
+
+        self.websocket_server = WebSocketServer(
+            parent=self
+        )
+
+        self.websocket_server.client_connected.connect(
+            self._update_connection_status
+        )
+        self.websocket_server.client_disconnected.connect(
+            self._update_connection_status
+        )
+
+        self.websocket_server.start()
 
         self.tissue_widgets = []
 
@@ -143,6 +157,23 @@ class MainWindow(QMainWindow):
             self._on_export_csv
         )
 
+        spacer = QWidget()
+        spacer.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Preferred,
+        )
+        toolbar.addWidget(spacer)
+
+        self.connection_status = QLabel(
+            "● Disconnected"
+        )
+        self.connection_status.setStyleSheet(
+            "color: red; "
+            "font-weight: bold; "
+            "padding: 4px;"
+        )
+        toolbar.addWidget(self.connection_status)
+
     def _populate_right_panel(self):
 
         right_panel = QWidget()
@@ -199,6 +230,27 @@ class MainWindow(QMainWindow):
             self.config,
             self.reference_manager.get_reference_config(),
         )
+
+    def _update_connection_status(self):
+
+        if self.websocket_server.is_connected:
+            self.connection_status.setText(
+                "● Connected"
+            )
+            self.connection_status.setStyleSheet(
+                "color: green; "
+                "font-weight: bold; "
+                "padding: 4px;"
+            )
+        else:
+            self.connection_status.setText(
+                "● Disconnected"
+            )
+            self.connection_status.setStyleSheet(
+                "color: red; "
+                "font-weight: bold; "
+                "padding: 4px;"
+            )
 
     def _load_default_reference(self):
 
@@ -309,8 +361,18 @@ class MainWindow(QMainWindow):
 
     def _on_send_to_unity(self):
 
+        if not self.websocket_server.is_connected:
+            QMessageBox.warning(
+                self,
+                "No Connection",
+                "No client connected to Unity.\n"
+                "Start Play Mode in Unity "
+                "to establish a connection.",
+            )
+            return
+
         try:
-            self.websocket_client.send_config(
+            self.websocket_server.send_config(
                 self.config
             )
 
