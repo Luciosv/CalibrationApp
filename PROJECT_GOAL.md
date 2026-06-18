@@ -72,5 +72,4 @@ Prioridades:
 4. Extensibilidad para agregar nuevas funciones matemáticas.
 5. Robustez del flujo JSON.
 
-No modifiques nada todavía.
 Utiliza esta información como contexto permanente para todas las tareas posteriores.

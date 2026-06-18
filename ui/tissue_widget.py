@@ -125,13 +125,26 @@ class TissueWidget(QGroupBox):
         self.rebuild_parameter_widgets()
     
     
+    @staticmethod
+    def _clear_layout(layout):
+        while layout.count():
+            item = layout.takeAt(0)
+            if item.widget() is not None:
+                item.widget().setVisible(False)
+                item.widget().deleteLater()
+            elif item.layout() is not None:
+                sub = item.layout()
+                while sub.count():
+                    sub_item = sub.takeAt(0)
+                    if sub_item.widget() is not None:
+                        sub_item.widget().setVisible(False)
+                        sub_item.widget().deleteLater()
+                sub.deleteLater()
+
     def rebuild_parameter_widgets(self):
-        # Clear existing widgets
-        while self.parameters_layout.count():
-            item = self.parameters_layout.takeAt(0)
-            widget = item.widget()
-            if widget is not None:
-                widget.deleteLater()
+        TissueWidget._clear_layout(
+            self.parameters_layout
+        )
 
         self.param_spinboxes.clear()
 
