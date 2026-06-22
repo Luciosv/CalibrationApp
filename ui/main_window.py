@@ -226,6 +226,10 @@ class MainWindow(QMainWindow):
 
             widget.blockSignals(False)
 
+        self.reference_manager.sync_from_config(
+            self.config
+        )
+
         self.plot_widget.update_plot(
             self.config,
             self.reference_manager.get_reference_config(),

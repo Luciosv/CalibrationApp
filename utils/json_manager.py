@@ -151,12 +151,16 @@ class JsonManager:
         config.update_depths()
     
     @staticmethod
-    def load_config(path: str) -> SimulationConfig:
+    def load_config(
+        path: str,
+        disable_missing: bool = False,
+    ) -> SimulationConfig:
         config = SimulationConfig()
 
         JsonManager.load_json(
             path,
-            config
+            config,
+            disable_missing=disable_missing,
         )
 
         return config
