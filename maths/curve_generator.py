@@ -49,6 +49,26 @@ class CurveGenerator:
                 dz[-1] = tissue.thickness
 
             # ----------------------------------
+            # Puntos críticos de ruptura
+            # ----------------------------------
+
+            if tissue.family == "simone_pop":
+                f0, k, fr = tissue.parameter_values
+                rdz = (fr - f0) / k
+                if 0 < rdz < tissue.thickness:
+                    dz = np.sort(
+                        np.append(dz, [rdz - 1e-6, rdz])
+                    )
+
+            elif tissue.family == "kv_rupture":
+                k, fr, _ = tissue.parameter_values
+                rdz = fr / k
+                if 0 < rdz < tissue.thickness:
+                    dz = np.sort(
+                        np.append(dz, [rdz])
+                    )
+
+            # ----------------------------------
             # Evaluación fórmula
             # ----------------------------------
 

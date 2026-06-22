@@ -210,13 +210,16 @@ class TissueWidget(QGroupBox):
             self.tissue.enabled
         )
 
+        old_family = self.family_combo.currentText()
+        new_family = self.tissue.family
+
         self.family_combo.blockSignals(True)
         self.family_combo.setCurrentText(
-            self.tissue.family
+            new_family
         )
         self.family_combo.blockSignals(False)
 
-        if len(self.param_spinboxes) != len(self.tissue.parameters):
+        if old_family != new_family or len(self.param_spinboxes) != len(self.tissue.parameters):
             self.blockSignals(True)
             self.rebuild_parameter_widgets()
             self.blockSignals(False)

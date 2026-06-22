@@ -26,7 +26,7 @@ class SimulationConfig:
 
     tissues: list[Tissue] = field(default_factory=list)
 
-    step_mm: float = 0.5
+    step_mm: float = 0.05
 
     def __post_init__(self) -> None:
 
