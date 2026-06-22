@@ -290,6 +290,7 @@ class MainWindow(QMainWindow):
             JsonManager.load_json(
                 path,
                 self.config,
+                disable_missing=True,
             )
 
             QMessageBox.information(

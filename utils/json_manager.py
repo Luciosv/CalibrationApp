@@ -89,6 +89,7 @@ class JsonManager:
     def load_json(
         path: str,
         config: SimulationConfig,
+        disable_missing: bool = False,
     ) -> None:
 
         with open(
@@ -99,6 +100,8 @@ class JsonManager:
 
             data = json.load(file)
 
+        found_tissues: set[str] = set()
+
         for tissue_name, tissue_data in data.items():
 
             tissue = config.get_tissue(
@@ -107,6 +110,8 @@ class JsonManager:
 
             if tissue is None:
                 continue
+
+            found_tissues.add(tissue_name)
 
             family = tissue_data["family"]
 
@@ -131,6 +136,17 @@ class JsonManager:
                     param_values,
                 )
             ]
+
+        if disable_missing:
+
+            for tissue in config.tissues:
+
+                if (
+                    tissue.name
+                    not in found_tissues
+                ):
+
+                    tissue.enabled = False
 
         config.update_depths()
     

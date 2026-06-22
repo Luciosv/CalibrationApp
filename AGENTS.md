@@ -47,7 +47,8 @@ Dependencies: PySide6, PyQtGraph, numpy (see requirements.txt).
 
 - **Adding a formula**: create the function in `config/formulas.py`, register a `FormulaDefinition` in `FORMULAS`. UI auto-generates from the definition. No UI code changes needed.
 - **Parameters live in `tissue.parameters[]`** (list of `Parameter` objects), NOT as `tissue` attributes. Never use `getattr(tissue, param_name)`.
-- **`rebuild_parameter_widgets()`** destroys and recreates spinboxes. Called on family change only. `refresh_from_model()` updates spinbox values **in-place** using `blockSignals`, never calls rebuild.
+- **`rebuild_parameter_widgets()`** destroys and recreates spinboxes. Called on user family change (`_on_family_changed_by_user`) or by `refresh_from_model()` when `len(param_spinboxes) != len(tissue.parameters)`. Always wrap in `blockSignals(True)` on the widget when calling programmatically to prevent `configuration_changed` loops.
+- **Family change flow**: `_on_family_changed_by_user` is connected to the combo box signal and **resets parameters to defaults**. Loading from JSON goes through `JsonManager.load_json()` which sets `tissue.parameters` directly. `refresh_from_model()` always uses `blockSignals(True)` on `family_combo` to prevent triggering `_on_family_changed_by_user`, and compares spinbox count vs param count to decide rebuild vs in-place update.
 - **WebSocket**: Python is server (QWebSocketServer), Unity is client. Listens on `localhost:8765`. No handshake, no ACK, no keepalive. Send-only from Python.
 - **Reference**: `data/reference.json` loads automatically on startup and populates the editing config.
 - **`SimulationConfig`** uses `@dataclass(slots=True)`. Default tissues built in `_build_default_tissues()`. Depths recalculated via `update_depths()`.
@@ -58,6 +59,7 @@ Dependencies: PySide6, PyQtGraph, numpy (see requirements.txt).
 - `QWebSocket.State.Connected` does not exist in PySide6. Use `QAbstractSocket.SocketState.ConnectedState` from `PySide6.QtNetwork`.
 - `blockSignals(True)` on a parent widget does NOT block child widget signals. Block each QDoubleSpinBox individually when setting values from model.
 - `deleteLater()` is deferred. Call `setVisible(False)` before `deleteLater()` to prevent visual overlap during cleanup.
+- `blockSignals(True)` on `family_combo` in `refresh_from_model()` is required; otherwise `setCurrentText()` triggers `_on_family_changed_by_user` and overwrites loaded parameters with defaults.
 - Name mismatch between `reference.json` and `DEFAULT_TISSUES` caused silent load failures. Names must match exactly.
 - `_clear_layout()` must recursively handle sub-layouts (QHBoxLayout inside QVBoxLayout) because `item.widget()` is None for layout items.
 

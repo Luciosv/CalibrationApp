@@ -86,6 +86,7 @@ class TissueWidget(QGroupBox):
         self.depth_spin = QDoubleSpinBox()
 
         self.depth_spin.setRange(0.1, 1000)
+        self.depth_spin.setDecimals(6)
         self.depth_spin.setSingleStep(0.1)
 
         depth_layout.addWidget(
@@ -163,6 +164,7 @@ class TissueWidget(QGroupBox):
                 spin_box = QDoubleSpinBox()
                 lim_inf, lim_sup = formula_class.bounds[i]
                 spin_box.setRange(lim_inf, lim_sup)
+                spin_box.setDecimals(6)
                 spin_box.setSingleStep(0.1)
 
                 # Set current value from the tissue model
@@ -191,7 +193,7 @@ class TissueWidget(QGroupBox):
         )
 
         self.family_combo.currentTextChanged.connect(
-            self._on_family_changed
+            self._on_family_changed_by_user
         )
 
         self.depth_spin.valueChanged.connect(
@@ -208,21 +210,28 @@ class TissueWidget(QGroupBox):
             self.tissue.enabled
         )
 
+        self.family_combo.blockSignals(True)
         self.family_combo.setCurrentText(
             self.tissue.family
         )
+        self.family_combo.blockSignals(False)
+
+        if len(self.param_spinboxes) != len(self.tissue.parameters):
+            self.blockSignals(True)
+            self.rebuild_parameter_widgets()
+            self.blockSignals(False)
+        else:
+            for i, spin_box in enumerate(self.param_spinboxes):
+                if i < len(self.tissue.parameters):
+                    spin_box.blockSignals(True)
+                    spin_box.setValue(
+                        self.tissue.parameters[i].value
+                    )
+                    spin_box.blockSignals(False)
 
         self.depth_spin.setValue(
             self.tissue.end_depth
         )
-
-        for i, spin_box in enumerate(self.param_spinboxes):
-            if i < len(self.tissue.parameters):
-                spin_box.blockSignals(True)
-                spin_box.setValue(
-                    self.tissue.parameters[i].value
-                )
-                spin_box.blockSignals(False)
 
     # --------------------------------------------------
     # UI -> Modelo
@@ -237,7 +246,7 @@ class TissueWidget(QGroupBox):
 
         self.configuration_changed.emit()
 
-    def _on_family_changed(
+    def _on_family_changed_by_user(
         self,
         family: str
     ):
