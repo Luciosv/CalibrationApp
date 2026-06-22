@@ -75,7 +75,7 @@ def _kv_rupture(dz: np.ndarray, params: list[float]) -> np.ndarray:
         decay_slope * (dz[after] - rupture_depth)
     )
 
-    return np.maximum(force, 0.5)
+    return force
 
 
 def _simone_pop(dz: np.ndarray, params: list[float]) -> np.ndarray:
@@ -95,7 +95,7 @@ def _simone_pop(dz: np.ndarray, params: list[float]) -> np.ndarray:
 
     force = f0 + k * dz
 
-    force[dz > rupture_depth] = 0.5
+    force[dz >= rupture_depth] = 0.5
 
     return force
 
