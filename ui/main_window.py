@@ -1,6 +1,12 @@
 import os
 
+from PySide6.QtGui import QShortcut, QKeySequence, QIcon
+
+from PySide6.QtCore import Qt
+
 from PySide6.QtWidgets import (
+    QStyle,
+
     QMainWindow,
     QWidget,
     QHBoxLayout,
@@ -11,6 +17,8 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QLabel,
     QSizePolicy,
+    QSplitter,
+    QStackedWidget,
 )
 
 from models.simulation_config import (
@@ -25,12 +33,24 @@ from ui.tissue_widget import (
     TissueWidget,
 )
 
+from ui.tissue_list_widget import (
+    TissueListWidget,
+)
+
+from ui.depth_bar_widget import (
+    DepthBarWidget,
+)
+
 from utils.json_manager import JsonManager
 from utils.reference_manager import ReferenceManager
 
 from network.websocket_server import WebSocketServer
 
 from models.parameter import Parameter
+
+from maths.curve_generator import CurveGenerator
+
+import numpy as np
 
 DEFAULT_REF_PATH = os.path.join(
     os.path.dirname(
@@ -98,14 +118,77 @@ class MainWindow(QMainWindow):
 
         self._graph()
 
-        self.right_scroll = QScrollArea()
-        self.right_scroll.setWidgetResizable(True)
+        right_container = QWidget()
+        right_container.setObjectName("rightPanel")
+        right_container.setStyleSheet(
+            "#rightPanel { border-left: 1px solid #d0d0d0; "
+            "background: #f5f5f5; }"
+        )
+        right_layout = QVBoxLayout(right_container)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setSpacing(3)
+
+        self.totals_bar = QLabel("")
+        self.totals_bar.setStyleSheet(
+            "padding: 3px 10px; "
+            "background: #e8e8e8; "
+            "border-bottom: 1px solid #d0d0d0; "
+            "font-size: 11px; "
+            "color: #555;"
+        )
+        right_layout.addWidget(self.totals_bar)
+
+        self.depth_bar = DepthBarWidget(
+            self.config.tissues
+        )
+        self.depth_bar.tissue_clicked.connect(
+            self._on_tissue_selected
+        )
+        right_layout.addWidget(self.depth_bar)
+
+        self.mid_splitter = QSplitter(Qt.Orientation.Horizontal)
+
+        self.tissue_list = TissueListWidget(
+            self.config.tissues
+        )
+        self.tissue_list.tissue_selected.connect(
+            self._on_tissue_selected
+        )
+        self.tissue_list.tissue_toggled.connect(
+            self._on_tissue_toggled
+        )
+        self.mid_splitter.addWidget(self.tissue_list)
+
+        self.detail_stack = QStackedWidget()
+        self.mid_splitter.addWidget(self.detail_stack)
+
+        self.mid_splitter.setSizes([150, 350])
+
+        right_layout.addWidget(self.mid_splitter)
+
         self.root.addWidget(
-            self.right_scroll,
+            right_container,
             1
         )
 
         self._populate_right_panel()
+
+        self._create_shortcuts()
+
+    def _create_shortcuts(self):
+
+        QShortcut(QKeySequence("Ctrl+S"), self).activated.connect(
+            self._on_send_to_unity
+        )
+        QShortcut(QKeySequence("Ctrl+E"), self).activated.connect(
+            self._on_export_json
+        )
+        QShortcut(QKeySequence("Ctrl+R"), self).activated.connect(
+            self._on_restore_defaults
+        )
+        QShortcut(QKeySequence("Ctrl+L"), self).activated.connect(
+            self._on_load_reference
+        )
 
     def _create_toolbar(self):
 
@@ -113,7 +196,14 @@ class MainWindow(QMainWindow):
 
         self.addToolBar(toolbar)
 
+        toolbar.setToolButtonStyle(
+            Qt.ToolButtonStyle.ToolButtonTextBesideIcon
+        )
+
+        s = self.style()
+
         load_action = toolbar.addAction(
+            s.standardIcon(QStyle.StandardPixmap.SP_DialogOpenButton),
             "Load Reference"
         )
 
@@ -122,6 +212,7 @@ class MainWindow(QMainWindow):
         )
 
         restore_action = toolbar.addAction(
+            s.standardIcon(QStyle.StandardPixmap.SP_RestoreDefaultsButton),
             "Restore Defaults"
         )
 
@@ -132,6 +223,7 @@ class MainWindow(QMainWindow):
         toolbar.addSeparator()
 
         send_action = toolbar.addAction(
+            s.standardIcon(QStyle.StandardPixmap.SP_ArrowForward),
             "Send to Unity"
         )
 
@@ -142,6 +234,7 @@ class MainWindow(QMainWindow):
         toolbar.addSeparator()
 
         export_json_action = toolbar.addAction(
+            s.standardIcon(QStyle.StandardPixmap.SP_DialogSaveButton),
             "Export JSON"
         )
 
@@ -150,6 +243,7 @@ class MainWindow(QMainWindow):
         )
 
         export_csv_action = toolbar.addAction(
+            s.standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView),
             "Export CSV"
         )
 
@@ -176,40 +270,33 @@ class MainWindow(QMainWindow):
 
     def _populate_right_panel(self):
 
-        right_panel = QWidget()
+        for widget in self.tissue_widgets:
+            widget.setVisible(False)
+            widget.deleteLater()
+        self.tissue_widgets.clear()
 
-        right_layout = QVBoxLayout(
-            right_panel
-        )
-
-        for tissue in self.config.tissues:
-
-            widget = TissueWidget(
-                tissue
+        while self.detail_stack.count():
+            self.detail_stack.removeWidget(
+                self.detail_stack.widget(0)
             )
 
+        for tissue in self.config.tissues:
+            widget = TissueWidget(tissue)
             widget.configuration_changed.connect(
                 self.on_configuration_changed
             )
+            self.tissue_widgets.append(widget)
+            self.detail_stack.addWidget(widget)
 
-            self.tissue_widgets.append(
-                widget
-            )
-
-            right_layout.addWidget(
-                widget
-            )
-
-        self.right_scroll.setWidget(
-            right_panel
-        )
+        if self.tissue_widgets:
+            self.detail_stack.setCurrentIndex(0)
 
     def _graph(self):
         self.plot_widget = PlotWidget()
 
         self.root.addWidget(
             self.plot_widget,
-            3
+            2
         )
 
     def on_configuration_changed(self):
@@ -217,14 +304,30 @@ class MainWindow(QMainWindow):
 
         self.refresh_everything()
 
+    def _on_tissue_selected(self, index: int):
+        if 0 <= index < self.detail_stack.count():
+            self.detail_stack.setCurrentIndex(index)
+
+    def _on_tissue_toggled(self, index: int, enabled: bool):
+        if 0 <= index < len(self.config.tissues):
+            self.config.tissues[index].enabled = enabled
+            self.on_configuration_changed()
+
     def refresh_everything(self):
-        for widget in self.tissue_widgets:
+        for i, widget in enumerate(self.tissue_widgets):
 
             widget.blockSignals(True)
 
             widget.refresh_from_model()
 
             widget.blockSignals(False)
+
+        self.tissue_list.refresh_rows(self.config.tissues)
+        self.tissue_list.set_selected(
+            self.detail_stack.currentIndex()
+        )
+
+        self.depth_bar.update_tissues(self.config.tissues)
 
         self.reference_manager.sync_from_config(
             self.config
@@ -233,6 +336,35 @@ class MainWindow(QMainWindow):
         self.plot_widget.update_plot(
             self.config,
             self.reference_manager.get_reference_config(),
+        )
+
+        self._update_totals_bar()
+
+    def _update_totals_bar(self):
+
+        total_depth = self.config.total_depth
+        total = len(self.config.tissues)
+        active = len(self.config.active_tissues)
+
+        mse_text = ""
+        ref_config = self.reference_manager.get_reference_config()
+        if ref_config is not None:
+            try:
+                _, fitted_y = CurveGenerator.generate(self.config)
+                _, ref_y = CurveGenerator.generate(ref_config)
+                min_len = min(len(fitted_y), len(ref_y))
+                if min_len > 0:
+                    mse = float(
+                        np.mean((fitted_y[:min_len] - ref_y[:min_len]) ** 2)
+                    )
+                    mse_text = f" | MSE: {mse:.4f} N²"
+            except Exception:
+                mse_text = " | MSE: ---"
+
+        self.totals_bar.setText(
+            f"Total: {total_depth:.2f} mm | "
+            f"{active}/{total} tissues active"
+            f"{mse_text}"
         )
 
     def _update_connection_status(self):

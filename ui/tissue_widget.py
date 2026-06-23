@@ -1,4 +1,6 @@
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt, Signal
+
+from PySide6.QtGui import QStandardItem, QFont
 
 from PySide6.QtWidgets import (
     QWidget,
@@ -9,6 +11,8 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
     QComboBox,
     QGroupBox,
+    QFrame,
+    QSlider,
 )
 
 from config.formulas import FORMULAS, get_default_params
@@ -30,9 +34,22 @@ class TissueWidget(QGroupBox):
 
         self.tissue = tissue
 
-        self.setTitle(tissue.name)
+        self.setTitle("")
+
+        self.setStyleSheet("""
+            TissueWidget {
+                border: 1px solid #d0d0d0;
+                border-radius: 6px;
+                background: #ffffff;
+                margin: 0px;
+            }
+        """)
 
         self.param_spinboxes = []
+        self.param_delta_spinboxes = []
+        self.param_sliders = []
+
+        self._slider_scale = 10000
 
         self._build_ui()
 
@@ -47,85 +64,142 @@ class TissueWidget(QGroupBox):
     def _build_ui(self):
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(10, 6, 10, 8)
+        layout.setSpacing(6)
 
-        # Enable
+        self._create_header(layout)
 
-        self._create_enabled_checkbox(layout)
+        self._create_properties(layout)
 
-        # Depth
+        self._create_parameters_section(layout)
 
-        self._create_depth_spinbox(layout)
+    def _create_header(self, layout):
 
-        # Family
+        header = QHBoxLayout()
+        header.setSpacing(6)
 
-        self._create_family_combobox(layout)
-        
-        # Parameters
-        self._create_parameters_widgets(layout)
-        
-    
-    def _create_enabled_checkbox(self, layout):
-
-        self.enable_checkbox = QCheckBox(
-            "Enabled"
+        swatch = QFrame()
+        swatch.setFixedSize(14, 14)
+        swatch.setStyleSheet(
+            f"background-color: {self.tissue.color}; "
+            "border: 1px solid #999; border-radius: 3px;"
         )
+        swatch.setToolTip(f"Color: {self.tissue.color}")
+        header.addWidget(swatch)
 
-        layout.addWidget(
-            self.enable_checkbox
+        name_label = QLabel(self.tissue.name)
+        name_label.setStyleSheet(
+            "font-weight: bold; font-size: 13px; color: #222;"
         )
-    
-    
-    def _create_depth_spinbox(self, layout):
+        header.addWidget(name_label)
 
-        depth_layout = QHBoxLayout()
+        header.addStretch()
 
-        depth_layout.addWidget(
-            QLabel("End Depth (mm)")
+        self.enable_checkbox = QCheckBox("Enabled")
+        self.enable_checkbox.setToolTip(
+            "Disable this tissue to exclude it from the simulation"
         )
+        header.addWidget(self.enable_checkbox)
+
+        layout.addLayout(header)
+
+    def _create_properties(self, layout):
+
+        props = QVBoxLayout()
+        props.setSpacing(4)
+        props.setContentsMargins(16, 2, 0, 2)
+
+        depth_row = QHBoxLayout()
+        depth_row.setSpacing(4)
+
+        depth_label = QLabel("Depth:")
+        depth_label.setStyleSheet("color: #555;")
+        depth_row.addWidget(depth_label)
+
+        self.start_depth_label = QLabel("0.00")
+        self.start_depth_label.setStyleSheet("color: #555;")
+        depth_row.addWidget(self.start_depth_label)
+
+        arrow = QLabel("→")
+        arrow.setStyleSheet("color: #999;")
+        depth_row.addWidget(arrow)
 
         self.depth_spin = QDoubleSpinBox()
-
         self.depth_spin.setRange(0.1, 1000)
-        self.depth_spin.setDecimals(6)
+        self.depth_spin.setDecimals(2)
         self.depth_spin.setSingleStep(0.1)
-
-        depth_layout.addWidget(
-            self.depth_spin
+        self.depth_spin.setFixedWidth(80)
+        self.depth_spin.setToolTip(
+            "End depth of this tissue (mm)\nThickness = end − start"
         )
+        depth_row.addWidget(self.depth_spin)
 
-        layout.addLayout(
-            depth_layout
-        )
-    
-    
-    def _create_family_combobox(self, layout):
-        family_layout = QHBoxLayout()
+        mm_label = QLabel("mm")
+        mm_label.setStyleSheet("color: #555;")
+        depth_row.addWidget(mm_label)
 
-        family_layout.addWidget(
-            QLabel("Family")
-        )
+        self.thickness_label = QLabel("")
+        self.thickness_label.setStyleSheet("color: #888; font-size: 11px;")
+        depth_row.addWidget(self.thickness_label)
+
+        depth_row.addStretch()
+        props.addLayout(depth_row)
+
+        family_row = QHBoxLayout()
+        family_row.setSpacing(4)
+
+        family_label = QLabel("Family:")
+        family_label.setStyleSheet("color: #555;")
+        family_row.addWidget(family_label)
 
         self.family_combo = QComboBox()
 
-        self.family_combo.addItems(
-            sorted(FORMULAS.keys())
+        model = self.family_combo.model()
+
+        categories = [
+            ("Simple", ["constant", "linear"]),
+            ("Rupture", ["kv_rupture", "simone_pop"]),
+            ("Polynomial", ["polynomial2", "polynomial3"]),
+            ("Exponential", [
+                "exponential", "sigmoid", "saturating_exp"
+            ]),
+        ]
+
+        for cat_name, families in categories:
+            cat_item = QStandardItem(cat_name)
+            cat_item.setEnabled(False)
+            font = cat_item.font()
+            font.setBold(True)
+            font.setPointSize(font.pointSize() - 1)
+            cat_item.setFont(font)
+            model.appendRow(cat_item)
+
+            for fam in families:
+                item = QStandardItem(fam)
+                model.appendRow(item)
+
+        self.family_combo.setToolTip(
+            "Mathematical model for this tissue's force response"
         )
 
-        family_layout.addWidget(
-            self.family_combo
-        )
+        family_row.addWidget(self.family_combo)
+        family_row.addStretch()
+        props.addLayout(family_row)
 
-        layout.addLayout(
-            family_layout
-        )
-    
-    
-    def _create_parameters_widgets(self, layout):
+        layout.addLayout(props)
+
+    def _create_parameters_section(self, layout):
+
+        sep = QFrame()
+        sep.setFrameShape(QFrame.Shape.HLine)
+        sep.setStyleSheet("color: #e0e0e0; margin: 2px 0;")
+        layout.addWidget(sep)
+
         self.parameters_layout = QVBoxLayout()
+        self.parameters_layout.setSpacing(3)
         layout.addLayout(self.parameters_layout)
         self.rebuild_parameter_widgets()
-    
-    
+
     @staticmethod
     def _clear_layout(layout):
         while layout.count():
@@ -134,13 +208,16 @@ class TissueWidget(QGroupBox):
                 item.widget().setVisible(False)
                 item.widget().deleteLater()
             elif item.layout() is not None:
-                sub = item.layout()
-                while sub.count():
-                    sub_item = sub.takeAt(0)
-                    if sub_item.widget() is not None:
-                        sub_item.widget().setVisible(False)
-                        sub_item.widget().deleteLater()
-                sub.deleteLater()
+                TissueWidget._clear_layout(item.layout())
+                item.layout().deleteLater()
+
+    @staticmethod
+    def _decimals_from_delta(delta: float) -> int:
+        delta_str = f"{delta:.10f}"
+        if "." in delta_str:
+            fractional = delta_str.split(".")[1].rstrip("0")
+            return max(1, min(len(fractional), 6))
+        return 1
 
     def rebuild_parameter_widgets(self):
         TissueWidget._clear_layout(
@@ -148,39 +225,99 @@ class TissueWidget(QGroupBox):
         )
 
         self.param_spinboxes.clear()
+        self.param_delta_spinboxes.clear()
+        self.param_sliders.clear()
 
-        # Add new widgets based on the selected family
         formula_class = FORMULAS.get(self.tissue.family)
 
         if formula_class is not None:
             for i in range(len(formula_class.parameter_names)):
-                param_layout = QHBoxLayout()
                 param = formula_class.parameter_names[i]
-
-                param_layout.addWidget(
-                    QLabel(param)
-                )
 
                 spin_box = QDoubleSpinBox()
                 lim_inf, lim_sup = formula_class.bounds[i]
                 spin_box.setRange(lim_inf, lim_sup)
-                spin_box.setDecimals(6)
-                spin_box.setSingleStep(0.1)
+                spin_box.setDecimals(
+                    self._decimals_from_delta(self.tissue.parameters[i].delta)
+                )
+                spin_box.setSingleStep(
+                    self.tissue.parameters[i].delta
+                )
 
-                # Set current value from the tissue model
+                spin_box.setToolTip(
+                    f"{param} ∈ [{lim_inf}, {lim_sup}]"
+                )
+
                 current_value = self.tissue.parameters[i].value
                 spin_box.setValue(current_value)
 
-                # Connect signal to update the tissue model when changed
-                spin_box.valueChanged.connect(
-                    lambda value, p=param: self._on_parameter_changed(p, value)
+                spin_box.editingFinished.connect(
+                    lambda p=param, sb=spin_box: self._on_parameter_changed(p, sb.value())
                 )
 
-                param_layout.addWidget(spin_box)
+                delta_spin = QDoubleSpinBox()
+                delta_spin.setRange(0.0001, 10.0)
+                delta_spin.setDecimals(4)
+                delta_spin.setSingleStep(0.001)
+                delta_spin.setPrefix("Δ ")
+                delta_spin.setValue(
+                    self.tissue.parameters[i].delta
+                )
+                delta_spin.setToolTip(
+                    "Step size for the parameter spinbox arrows"
+                )
+                delta_spin.valueChanged.connect(
+                    lambda value, idx=i: self._on_delta_changed(idx, value)
+                )
 
-                self.parameters_layout.addLayout(param_layout)
+                slider = QSlider(Qt.Orientation.Horizontal)
+                slider.setRange(
+                    int(lim_inf * self._slider_scale),
+                    int(lim_sup * self._slider_scale),
+                )
+                slider.setValue(
+                    int(current_value * self._slider_scale)
+                )
+                slider.setToolTip(
+                    f"{param}: drag to adjust"
+                )
+
+                def make_slider_handler(p_name, spin, scale):
+                    def handler(val):
+                        new_val = val / scale
+                        spin.blockSignals(True)
+                        spin.setValue(new_val)
+                        spin.blockSignals(False)
+                        self._on_parameter_changed(p_name, new_val)
+                    return handler
+
+                slider.valueChanged.connect(
+                    make_slider_handler(param, spin_box, self._slider_scale)
+                )
+
+                outer = QVBoxLayout()
+                outer.setSpacing(1)
+
+                row1 = QHBoxLayout()
+                row1.setSpacing(4)
+                param_label = QLabel(param)
+                param_label.setStyleSheet("color: #444;")
+                row1.addWidget(param_label)
+                row1.addWidget(spin_box)
+                row1.addWidget(delta_spin)
+                row1.addStretch()
+                outer.addLayout(row1)
+
+                row2 = QHBoxLayout()
+                row2.setContentsMargins(0, 0, 0, 0)
+                row2.addWidget(slider)
+                outer.addLayout(row2)
+
+                self.parameters_layout.addLayout(outer)
 
                 self.param_spinboxes.append(spin_box)
+                self.param_delta_spinboxes.append(delta_spin)
+                self.param_sliders.append(slider)
 
     # --------------------------------------------------
     # Señales
@@ -196,7 +333,7 @@ class TissueWidget(QGroupBox):
             self._on_family_changed_by_user
         )
 
-        self.depth_spin.valueChanged.connect(
+        self.depth_spin.editingFinished.connect(
             self._on_depth_changed
         )
 
@@ -232,8 +369,32 @@ class TissueWidget(QGroupBox):
                     )
                     spin_box.blockSignals(False)
 
+            for i, delta_spin in enumerate(self.param_delta_spinboxes):
+                if i < len(self.tissue.parameters):
+                    delta_spin.blockSignals(True)
+                    delta_spin.setValue(
+                        self.tissue.parameters[i].delta
+                    )
+                    delta_spin.blockSignals(False)
+
+            for i, slider in enumerate(self.param_sliders):
+                if i < len(self.tissue.parameters):
+                    slider.blockSignals(True)
+                    slider.setValue(
+                        int(self.tissue.parameters[i].value * self._slider_scale)
+                    )
+                    slider.blockSignals(False)
+
         self.depth_spin.setValue(
             self.tissue.end_depth
+        )
+
+        self.start_depth_label.setText(
+            f"{self.tissue.start_depth:.2f}"
+        )
+
+        self.thickness_label.setText(
+            f"({self.tissue.thickness:.2f} mm)"
         )
 
     # --------------------------------------------------
@@ -254,6 +415,9 @@ class TissueWidget(QGroupBox):
         family: str
     ):
 
+        if family not in FORMULAS:
+            return
+
         self.tissue.family = family
         param_names = FORMULAS[family].parameter_names
         param_values = get_default_params(family)
@@ -264,16 +428,13 @@ class TissueWidget(QGroupBox):
         self.rebuild_parameter_widgets()
         self.configuration_changed.emit()
 
-    def _on_depth_changed(
-        self,
-        new_end_depth: float
-    ):
+    def _on_depth_changed(self):
 
         start_depth = self.tissue.start_depth
 
         self.tissue.thickness = max(
             0.1,
-            new_end_depth - start_depth
+            self.depth_spin.value() - start_depth
         )
 
         self.configuration_changed.emit()
@@ -284,3 +445,11 @@ class TissueWidget(QGroupBox):
                 p.value = value
                 break
         self.configuration_changed.emit()
+
+    def _on_delta_changed(self, param_index: int, delta: float):
+        if param_index < len(self.tissue.parameters):
+            self.tissue.parameters[param_index].delta = delta
+            self.param_spinboxes[param_index].setSingleStep(delta)
+            self.param_spinboxes[param_index].setDecimals(
+                self._decimals_from_delta(delta)
+            )

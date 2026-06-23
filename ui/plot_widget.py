@@ -53,7 +53,7 @@ class PlotWidget(QWidget):
             [],
             name="Reference curve",
             pen=pg.mkPen(
-                (180, 180, 180),
+                (150, 150, 150),
                 width=2,
                 style=pg.QtCore.Qt.DashLine
             )
@@ -152,7 +152,7 @@ class PlotWidget(QWidget):
                 tissue.color
             )
 
-            color.setAlpha(40)
+            color.setAlpha(50)
 
             rect.setBrush(color)
 
