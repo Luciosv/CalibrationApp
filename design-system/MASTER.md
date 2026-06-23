@@ -10,21 +10,19 @@
 ┌──────────────────────────────────────────────────┐
 │  Toolbar  [Load] [Restore] │ [Send] │ [Export..] │ ● Connected  │
 ├────────────────────────────┬─────────────────────┤
-│                            │  Totals bar         │
-│                            │  Depth bar          │
+│                            │  Depth bar (36px)   │
+│                            │  Total: 31.1mm 9/10 │
 │       Plot (2/3 width)     ├────────┬────────────┤
 │                            │ Tissue │ Detail     │
 │                            │ List   │ (Stacked)  │
 │                            │        │            │
-├────────────────────────────┴────────┴────────────┤
-│  Status: ...                                      │
 └──────────────────────────────────────────────────┘
 ```
 
 ### Colors & Backgrounds
-- **Right panel**: `#f5f5f5` background (via objectName `#rightPanel`)
-- **TissueWidget cards**: `#ffffff` background, `1px solid #d0d0d0` border, 6px border-radius
-- **TissueList**: no background (inherits `#f5f5f5`); rows use system palette selection
+- **Right panel**: `#eef0f2` background (via objectName `#rightPanel`)
+- **TissueWidget cards**: `#f6f7f9` background, `1px solid #d4d6d9` border, 4px border-radius
+- **TissueList**: no background (inherits `#eef0f2`); rows use system palette selection
 
 ### Ratios
 - **Plot : Right panel** = 2 : 1 (stretch factors in `QHBoxLayout`)
@@ -71,20 +69,19 @@ Subarachnoid     #D9D9F0  periwinkle
 
 ### Semantic Colors (inline)
 
-| Element | Usage | Where |
-|---------|-------|-------|
-| `#3b82f6` blue | Fitted curve line | `plot_widget.py` |
-| `#969696` gray dashed | Reference curve line | `plot_widget.py` |
-| `#e8e8e8` mid gray | Totals bar background | `main_window.py` |
-| `#e0e0e0` gray | TissueList header | `tissue_list_widget.py` |
-| `#f5f5f5` light gray | Right panel background | `main_window.py` |
-| `#ffffff` white | TissueWidget card background | `tissue_widget.py` |
-| `#d0d0d0` border | Dividers, panel borders | various |
-| `#555` body | Primary text | various |
-| `#666` muted | Secondary text (depth labels) | various |
-| `#888` faint | Tertiary/muted text | various |
-| `#444` dark | Depth bar labels, param labels | `depth_bar_widget.py`, `tissue_widget.py` |
-| `#222` near-black | Tissue name in header | `tissue_widget.py` |
+| Element | Hex | Usage | Where |
+|---------|-----|-------|-------|
+| Panel bg | `#eef0f2` | Right panel background | `main_window.py` |
+| Card bg | `#f6f7f9` | TissueWidget card background | `tissue_widget.py` |
+| Header bg | `#dce0e5` | TissueList header | `tissue_list_widget.py` |
+| Hover bg | `#e2e4e8` | TissueList row hover | `tissue_list_widget.py` |
+| Card border | `#d4d6d9` | Dividers, panel borders | various |
+| Accent blue | `#2563eb` | Fitted curve line in plot | `plot_widget.py` |
+| Ref curve | `#9ca3af` | Reference curve line | `plot_widget.py` |
+| Primary text | `#1a1d23` | Tissue names, labels | `tissue_widget.py` |
+| Secondary text | `#4a505c` | Depth labels, property labels | various |
+| Muted text | `#8b92a0` | Units, thickness hints | `tissue_widget.py` |
+| Spinbox text | `#1a1d23` | QDoubleSpinBox values | `tissue_widget.py` |
 
 ### Plot Regions
 - Region backgrounds use tissue color at `alpha=50`
@@ -97,15 +94,16 @@ Subarachnoid     #D9D9F0  periwinkle
 
 | Context | Size | Weight | Color | Where |
 |---------|------|--------|-------|-------|
-| Body text | default (QWidget) | Normal | `#555` | All labels |
-| Totals bar | 11px | Normal | `#555` | `main_window.py` |
-| Depth bar labels | 8pt | Normal | `#444` | `depth_bar_widget.py` |
-| TissueList header | 12px | Bold | default | `tissue_list_widget.py` |
-| Tissue name in widget | 13px | Bold | `#222` | `tissue_widget.py` |
+| Body text | default (QWidget) | Normal | `#1a1d23` | All labels |
+| Depth bar labels | 8pt | Normal | `#4a505c` | `depth_bar_widget.py` |
+| Depth totals | 8pt | Normal | `#1a1d23` | `depth_bar_widget.py` |
+| TissueList header | 12px | Bold | `#1a1d23` | `tissue_list_widget.py` |
+| Tissue name in widget | 13px | Bold | `#1a1d23` | `tissue_widget.py` |
 | Connection status | default | Bold | green/red | `main_window.py` |
-| Depth bar depth | 8pt | Normal | `#444` | `depth_bar_widget.py` |
-| Parameter labels | default | Normal | `#444` | `tissue_widget.py` |
-| Muted/secondary | 11px | Normal | `#888` | various |
+| Property labels | default | Normal | `#4a505c` | `tissue_widget.py` |
+| Parameter labels | default | Normal | `#4a505c` | `tissue_widget.py` |
+| Muted text | 11px | Normal | `#8b92a0` | `tissue_widget.py` |
+| Depth bar labels | 8pt | Normal | `#4a505c` | `depth_bar_widget.py` |
 
 - **Font**: System default (Qt resolves per-platform)
 - **No custom fonts** loaded
@@ -125,42 +123,39 @@ Subarachnoid     #D9D9F0  periwinkle
   - Export CSV → `SP_FileDialogDetailedView`
 - **Shortcuts**: Ctrl+S (Send), Ctrl+E (Export), Ctrl+R (Restore), Ctrl+L (Load)
 
-### 4.2 Totals Bar
-- **File**: `main_window.py`
-- **Content**: `Total: X.XX mm | A/B tissues active | MSE: X.XXXX N²`
-- **Style**: `background: #e8e8e8; border-bottom: 1px solid #d0d0d0; padding: 3px 10px; font-size: 11px; color: #555;`
-- **Updates**: Every `refresh_everything()` call
-
-### 4.3 Depth Bar
+### 4.2 Depth Bar (replaces old Totals Bar)
 - **File**: `depth_bar_widget.py`
 - **Height**: 36px fixed
 - **Content**: Colored segments of **equal width** (1/N per active tissue, regardless of thickness)
 - **Interaction**: Click → selects tissue. Hover → tooltip + label popup for narrow segments
-- **Labels**: Depth values at each segment boundary (bottom)
+- **Labels**: Depth values at each segment boundary (bottom, `#4a505c`)
+- **Total overlay**: Right-aligned text `Total: X.XXmm  A/B  MSE: ...` drawn in `#1a1d23` at bottom of bar (via `set_totals()`)
 - **Small segments** (<30px): show name only on hover, as a label above the bar
 
 ### 4.4 Tissue List
 - **File**: `tissue_list_widget.py`
-- **Row height**: 42px fixed
+- **Row height**: 38px fixed
 - **Row content**: [color swatch 14×14] [checkbox] [name] [start–end depth]
 - **Selection**: Click row → highlighted (system palette). Only one selected at a time.
-- **Hover**: `background: #e8e8e8` on non-selected rows
+- **Hover**: `background: #e2e4e8` on non-selected rows
+- **Header bg**: `#dce0e5`
 - **Signal**: `tissue_selected(int)`, `tissue_toggled(int, bool)`
 
 ### 4.5 Tissue Widget (Detail View)
 - **File**: `tissue_widget.py`
-- **Parent**: QGroupBox styled as card (`border: 1px solid #d0d0d0; border-radius: 6px; background: #ffffff;`)
+- **Parent**: QGroupBox styled as card (`border: 1px solid #d4d6d9; border-radius: 4px; background: #f6f7f9;`)
 - **Children**:
-  1. **Header row**: [color swatch 14×14] [tissue name (bold)] ── [Enabled checkbox]
+  1. **Header row**: [color swatch 14×14] [tissue name (bold, `#1a1d23`)] ── [Enabled checkbox]
   2. **Properties** (indented 16px):
-     - Depth: `0.00 → [end spinbox] mm (thickness mm)`
+     - Depth: `0.00 → [end spinbox] mm (thickness mm)` — labels `#4a505c`, units `#8b92a0`
      - Family: dropdown (categorized: Simple / Rupture / Polynomial / Exponential)
-  3. **Separator line** (HLine, `#e0e0e0`)
+  3. **Separator line** (HLine, `#d4d6d9`)
   4. **Parameters**: Per-param 2 rows
-     - Row 1: `[label] [value spinbox] [Δ delta]`
+     - Row 1: `[label `#4a505c`] [value spinbox `#1a1d23`] [Δ delta]`
      - Row 2: `[============ slider ============]`
 - **Slider**: Scaled by ×10000, range = formula bounds. Updates model on drag.
 - **Signals**: `editingFinished` on spinbox (not `valueChanged`) to avoid recalculation while typing
+- **QDoubleSpinBox**: Explicitly styled `color: #1a1d23; background: #ffffff;`
 
 ### 4.6 Plot
 - **File**: `plot_widget.py`

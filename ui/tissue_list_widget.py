@@ -24,7 +24,7 @@ class _TissueRow(QFrame):
         self._selected = False
         self._hovered = False
 
-        self.setFixedHeight(42)
+        self.setFixedHeight(38)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setObjectName("TissueRow")
 
@@ -54,7 +54,7 @@ class _TissueRow(QFrame):
         self.depth_label = QLabel(
             f"{start_depth:.1f}–{end_depth:.1f}"
         )
-        self.depth_label.setStyleSheet("color: #666; font-size: 11px;")
+        self.depth_label.setStyleSheet("color: #4a505c; font-size: 11px;")
         row.addWidget(self.depth_label)
 
         self.checkbox.toggled.connect(self._on_toggled)
@@ -86,7 +86,7 @@ class _TissueRow(QFrame):
             )
         elif self._hovered:
             self.setStyleSheet(
-                "#TissueRow { background: #e8e8e8; }"
+                "#TissueRow { background: #e2e4e8; }"
             )
             self.name_label.setStyleSheet("")
         else:
@@ -119,7 +119,7 @@ class TissueListWidget(QWidget):
         header = QLabel("Tissues")
         header.setStyleSheet(
             "font-weight: bold; padding: 4px 8px; "
-            "background: #e0e0e0; font-size: 12px;"
+            "background: #dce0e5; font-size: 12px;"
         )
         layout.addWidget(header)
 

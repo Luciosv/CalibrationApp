@@ -53,7 +53,7 @@ class PlotWidget(QWidget):
             [],
             name="Reference curve",
             pen=pg.mkPen(
-                (150, 150, 150),
+                (156, 163, 175),
                 width=2,
                 style=pg.QtCore.Qt.DashLine
             )

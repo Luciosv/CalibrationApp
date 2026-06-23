@@ -38,10 +38,14 @@ class TissueWidget(QGroupBox):
 
         self.setStyleSheet("""
             TissueWidget {
-                border: 1px solid #d0d0d0;
-                border-radius: 6px;
-                background: #ffffff;
+                border: 1px solid #d4d6d9;
+                border-radius: 4px;
+                background: #f6f7f9;
                 margin: 0px;
+            }
+            TissueWidget QDoubleSpinBox {
+                color: #1a1d23;
+                background: #ffffff;
             }
         """)
 
@@ -64,8 +68,8 @@ class TissueWidget(QGroupBox):
     def _build_ui(self):
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 6, 10, 8)
-        layout.setSpacing(6)
+        layout.setContentsMargins(8, 4, 8, 6)
+        layout.setSpacing(5)
 
         self._create_header(layout)
 
@@ -89,7 +93,7 @@ class TissueWidget(QGroupBox):
 
         name_label = QLabel(self.tissue.name)
         name_label.setStyleSheet(
-            "font-weight: bold; font-size: 13px; color: #222;"
+            "font-weight: bold; font-size: 13px; color: #1a1d23;"
         )
         header.addWidget(name_label)
 
@@ -113,15 +117,15 @@ class TissueWidget(QGroupBox):
         depth_row.setSpacing(4)
 
         depth_label = QLabel("Depth:")
-        depth_label.setStyleSheet("color: #555;")
+        depth_label.setStyleSheet("color: #4a505c;")
         depth_row.addWidget(depth_label)
 
         self.start_depth_label = QLabel("0.00")
-        self.start_depth_label.setStyleSheet("color: #555;")
+        self.start_depth_label.setStyleSheet("color: #4a505c;")
         depth_row.addWidget(self.start_depth_label)
 
         arrow = QLabel("→")
-        arrow.setStyleSheet("color: #999;")
+        arrow.setStyleSheet("color: #8b92a0;")
         depth_row.addWidget(arrow)
 
         self.depth_spin = QDoubleSpinBox()
@@ -135,11 +139,11 @@ class TissueWidget(QGroupBox):
         depth_row.addWidget(self.depth_spin)
 
         mm_label = QLabel("mm")
-        mm_label.setStyleSheet("color: #555;")
+        mm_label.setStyleSheet("color: #4a505c;")
         depth_row.addWidget(mm_label)
 
         self.thickness_label = QLabel("")
-        self.thickness_label.setStyleSheet("color: #888; font-size: 11px;")
+        self.thickness_label.setStyleSheet("color: #8b92a0; font-size: 11px;")
         depth_row.addWidget(self.thickness_label)
 
         depth_row.addStretch()
@@ -149,7 +153,7 @@ class TissueWidget(QGroupBox):
         family_row.setSpacing(4)
 
         family_label = QLabel("Family:")
-        family_label.setStyleSheet("color: #555;")
+        family_label.setStyleSheet("color: #4a505c;")
         family_row.addWidget(family_label)
 
         self.family_combo = QComboBox()
@@ -192,7 +196,7 @@ class TissueWidget(QGroupBox):
 
         sep = QFrame()
         sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setStyleSheet("color: #e0e0e0; margin: 2px 0;")
+        sep.setStyleSheet("color: #d4d6d9; margin: 2px 0;")
         layout.addWidget(sep)
 
         self.parameters_layout = QVBoxLayout()
@@ -301,7 +305,7 @@ class TissueWidget(QGroupBox):
                 row1 = QHBoxLayout()
                 row1.setSpacing(4)
                 param_label = QLabel(param)
-                param_label.setStyleSheet("color: #444;")
+                param_label.setStyleSheet("color: #4a505c;")
                 row1.addWidget(param_label)
                 row1.addWidget(spin_box)
                 row1.addWidget(delta_spin)

@@ -121,22 +121,12 @@ class MainWindow(QMainWindow):
         right_container = QWidget()
         right_container.setObjectName("rightPanel")
         right_container.setStyleSheet(
-            "#rightPanel { border-left: 1px solid #d0d0d0; "
-            "background: #f5f5f5; }"
+            "#rightPanel { border-left: 1px solid #d4d6d9; "
+            "background: #eef0f2; }"
         )
         right_layout = QVBoxLayout(right_container)
         right_layout.setContentsMargins(0, 0, 0, 0)
         right_layout.setSpacing(3)
-
-        self.totals_bar = QLabel("")
-        self.totals_bar.setStyleSheet(
-            "padding: 3px 10px; "
-            "background: #e8e8e8; "
-            "border-bottom: 1px solid #d0d0d0; "
-            "font-size: 11px; "
-            "color: #555;"
-        )
-        right_layout.addWidget(self.totals_bar)
 
         self.depth_bar = DepthBarWidget(
             self.config.tissues
@@ -338,10 +328,6 @@ class MainWindow(QMainWindow):
             self.reference_manager.get_reference_config(),
         )
 
-        self._update_totals_bar()
-
-    def _update_totals_bar(self):
-
         total_depth = self.config.total_depth
         total = len(self.config.tissues)
         active = len(self.config.active_tissues)
@@ -357,15 +343,11 @@ class MainWindow(QMainWindow):
                     mse = float(
                         np.mean((fitted_y[:min_len] - ref_y[:min_len]) ** 2)
                     )
-                    mse_text = f" | MSE: {mse:.4f} N²"
+                    mse_text = f"MSE: {mse:.4f} N²"
             except Exception:
-                mse_text = " | MSE: ---"
+                mse_text = "MSE: ---"
 
-        self.totals_bar.setText(
-            f"Total: {total_depth:.2f} mm | "
-            f"{active}/{total} tissues active"
-            f"{mse_text}"
-        )
+        self.depth_bar.set_totals(total_depth, active, total, mse_text)
 
     def _update_connection_status(self):
 
