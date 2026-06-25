@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QFrame,
     QSlider,
+    QPushButton,
     QSizePolicy,
 )
 
@@ -120,11 +121,29 @@ class TissueWidget(QGroupBox):
                 background: #3A3B48;
                 border-radius: 3px;
             }
+            TissueWidget QPushButton {
+                color: #E4E5EC;
+                background: #1B1C22;
+                border: 1px solid #3A3B48;
+                border-radius: 3px;
+                font-size: 13px;
+                font-weight: 600;
+                padding: 0;
+            }
+            TissueWidget QPushButton:hover {
+                border-color: #D4783C;
+                background: #2E303A;
+            }
+            TissueWidget QPushButton:pressed {
+                background: #3A3B48;
+            }
         """)
 
         self.param_spinboxes = []
         self.param_delta_spinboxes = []
         self.param_sliders = []
+        self.param_minus_buttons = []
+        self.param_plus_buttons = []
 
         self._slider_scale = 10000
 
@@ -325,6 +344,8 @@ class TissueWidget(QGroupBox):
         self.param_spinboxes.clear()
         self.param_delta_spinboxes.clear()
         self.param_sliders.clear()
+        self.param_minus_buttons.clear()
+        self.param_plus_buttons.clear()
 
         formula_class = FORMULAS.get(self.tissue.family)
 
@@ -352,6 +373,16 @@ class TissueWidget(QGroupBox):
                 spin_box.editingFinished.connect(
                     lambda p=param, sb=spin_box: self._on_parameter_changed(p, sb.value())
                 )
+
+                # Botón −
+                minus_btn = QPushButton("−")
+                minus_btn.setFixedSize(28, 24)
+                minus_btn.setToolTip(f"Decrease by {self.tissue.parameters[i].delta}")
+
+                # Botón +
+                plus_btn = QPushButton("+")
+                plus_btn.setFixedSize(28, 24)
+                plus_btn.setToolTip(f"Increase by {self.tissue.parameters[i].delta}")
 
                 delta_spin = QDoubleSpinBox()
                 delta_spin.setRange(0.0001, 10.0)
@@ -393,6 +424,25 @@ class TissueWidget(QGroupBox):
                     make_slider_handler(param, spin_box, self._slider_scale)
                 )
 
+                def make_step_handler(p_name, spin, step_sign):
+                    def handler():
+                        step = spin.singleStep()
+                        new_val = spin.value() + step * step_sign
+                        new_val = max(
+                            spin.minimum(),
+                            min(spin.maximum(), new_val)
+                        )
+                        spin.setValue(new_val)
+                        self._on_parameter_changed(p_name, new_val)
+                    return handler
+
+                minus_btn.clicked.connect(
+                    make_step_handler(param, spin_box, -1)
+                )
+                plus_btn.clicked.connect(
+                    make_step_handler(param, spin_box, 1)
+                )
+
                 outer = QVBoxLayout()
                 outer.setSpacing(4)
 
@@ -401,7 +451,9 @@ class TissueWidget(QGroupBox):
                 param_label = QLabel(param)
                 param_label.setStyleSheet("color: #9395A8; font-size: 12px;")
                 row1.addWidget(param_label)
+                row1.addWidget(minus_btn)
                 row1.addWidget(spin_box)
+                row1.addWidget(plus_btn)
                 row1.addWidget(delta_spin)
                 row1.addStretch()
                 outer.addLayout(row1)
@@ -416,6 +468,8 @@ class TissueWidget(QGroupBox):
                 self.param_spinboxes.append(spin_box)
                 self.param_delta_spinboxes.append(delta_spin)
                 self.param_sliders.append(slider)
+                self.param_minus_buttons.append(minus_btn)
+                self.param_plus_buttons.append(plus_btn)
 
     # --------------------------------------------------
     # Señales

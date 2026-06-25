@@ -195,8 +195,9 @@ All QDoubleSpinBox instances use a monospace font stack. This is the system's mo
      - Family: dropdown (categorized: Simple / Rupture / Polynomial / Exponential)
   3. **Separator line** (HLine, `color: #3A3B48`)
   4. **Parameters**: Per-param 2 rows
-     - Row 1: `[label #9395A8] [spinbox monospace #E4E5EC bg #1B1C22] [Δ delta spinbox]`
+     - Row 1: `[label #9395A8] [− btn] [spinbox monospace #E4E5EC bg #1B1C22] [+ btn] [Δ delta spinbox]`
      - Row 2: `[===== slider =====]`
+     - **± buttons**: `QPushButton`, 28×24px, same styling as spinbox (`bg #1B1C22`, border `#3A3B48`), copper hover. Step value = current `singleStep()` (synced with delta spinbox). Clamped to param bounds.
 - **QDoubleSpinBox**: bg `#1B1C22`, border `#3A3B48`, 3px radius, monospace font, up/down arrows hidden
 - **QComboBox**: bg `#1B1C22`, border `#3A3B48`, 3px radius, dropdown bg `#2E303A`, selection `#D4783C`
 - **QSlider**: groove `#3A3B48` height 6px, handle `#D4783C` 14px circle, sub-page `#D4783C`
