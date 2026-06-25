@@ -126,7 +126,7 @@ class MainWindow(QMainWindow):
         )
         right_layout = QVBoxLayout(right_container)
         right_layout.setContentsMargins(0, 0, 0, 0)
-        right_layout.setSpacing(0)
+        right_layout.setSpacing(4)
 
         self.totals_label = QLabel("")
         self.totals_label.setFixedHeight(36)

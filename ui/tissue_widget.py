@@ -80,30 +80,26 @@ class TissueWidget(QGroupBox):
     def _create_header(self, layout):
 
         header = QHBoxLayout()
-        header.setSpacing(6)
+        header.setSpacing(8)
+
+        header.addStretch()
 
         swatch = QFrame()
-        swatch.setFixedSize(14, 14)
+        swatch.setFixedSize(22, 22)
         swatch.setStyleSheet(
             f"background-color: {self.tissue.color}; "
-            "border: 1px solid #999; border-radius: 3px;"
+            "border: 2px solid #999; border-radius: 4px;"
         )
         swatch.setToolTip(f"Color: {self.tissue.color}")
         header.addWidget(swatch)
 
         name_label = QLabel(self.tissue.name)
         name_label.setStyleSheet(
-            "font-weight: bold; font-size: 13px; color: #1a1d23;"
+            "font-weight: bold; font-size: 15px; color: #1a1d23;"
         )
         header.addWidget(name_label)
 
         header.addStretch()
-
-        self.enable_checkbox = QCheckBox("Enabled")
-        self.enable_checkbox.setToolTip(
-            "Disable this tissue to exclude it from the simulation"
-        )
-        header.addWidget(self.enable_checkbox)
 
         layout.addLayout(header)
 
@@ -329,10 +325,6 @@ class TissueWidget(QGroupBox):
 
     def _connect_signals(self):
 
-        self.enable_checkbox.toggled.connect(
-            self._on_enabled_changed
-        )
-
         self.family_combo.currentTextChanged.connect(
             self._on_family_changed_by_user
         )
@@ -346,10 +338,6 @@ class TissueWidget(QGroupBox):
     # --------------------------------------------------
 
     def refresh_from_model(self):
-
-        self.enable_checkbox.setChecked(
-            self.tissue.enabled
-        )
 
         old_family = self.family_combo.currentText()
         new_family = self.tissue.family
@@ -404,15 +392,6 @@ class TissueWidget(QGroupBox):
     # --------------------------------------------------
     # UI -> Modelo
     # --------------------------------------------------
-
-    def _on_enabled_changed(
-        self,
-        checked: bool
-    ):
-
-        self.tissue.enabled = checked
-
-        self.configuration_changed.emit()
 
     def _on_family_changed_by_user(
         self,
