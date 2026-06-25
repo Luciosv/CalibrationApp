@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QFrame,
     QSlider,
+    QSizePolicy,
 )
 
 from config.formulas import FORMULAS, get_default_params
@@ -69,17 +70,36 @@ class TissueWidget(QGroupBox):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 4, 8, 6)
-        layout.setSpacing(5)
+        layout.setSpacing(6)
 
         self._create_header(layout)
 
-        self._create_properties(layout)
+        sep1 = QFrame()
+        sep1.setFrameShape(QFrame.Shape.HLine)
+        sep1.setStyleSheet("color: #d4d6d9; margin: 2px 0;")
+        layout.addWidget(sep1)
+
+        self._create_family_section(layout)
 
         self._create_parameters_section(layout)
 
+        sep2 = QFrame()
+        sep2.setFrameShape(QFrame.Shape.HLine)
+        sep2.setStyleSheet("color: #d4d6d9; margin: 2px 0;")
+        layout.addWidget(sep2)
+
+        self._create_depth_section(layout)
+
     def _create_header(self, layout):
 
-        header = QHBoxLayout()
+        header_frame = QFrame()
+        header_frame.setFixedHeight(36)
+        header_frame.setStyleSheet(
+            "background-color: #e8ecf2; border-radius: 3px;"
+        )
+
+        header = QHBoxLayout(header_frame)
+        header.setContentsMargins(8, 6, 8, 6)
         header.setSpacing(8)
 
         header.addStretch()
@@ -95,55 +115,19 @@ class TissueWidget(QGroupBox):
 
         name_label = QLabel(self.tissue.name)
         name_label.setStyleSheet(
-            "font-weight: bold; font-size: 15px; color: #1a1d23;"
+            "font-weight: bold; font-size: 16px; color: #1a1d23;"
         )
         header.addWidget(name_label)
 
         header.addStretch()
 
-        layout.addLayout(header)
+        layout.addWidget(header_frame)
 
-    def _create_properties(self, layout):
+    def _create_family_section(self, layout):
 
-        props = QVBoxLayout()
-        props.setSpacing(4)
-        props.setContentsMargins(16, 2, 0, 2)
-
-        depth_row = QHBoxLayout()
-        depth_row.setSpacing(4)
-
-        depth_label = QLabel("Depth:")
-        depth_label.setStyleSheet("color: #4a505c;")
-        depth_row.addWidget(depth_label)
-
-        self.start_depth_label = QLabel("0.00")
-        self.start_depth_label.setStyleSheet("color: #4a505c;")
-        depth_row.addWidget(self.start_depth_label)
-
-        arrow = QLabel("→")
-        arrow.setStyleSheet("color: #8b92a0;")
-        depth_row.addWidget(arrow)
-
-        self.depth_spin = QDoubleSpinBox()
-        self.depth_spin.setRange(0.1, 1000)
-        self.depth_spin.setDecimals(2)
-        self.depth_spin.setSingleStep(0.1)
-        self.depth_spin.setFixedWidth(80)
-        self.depth_spin.setToolTip(
-            "End depth of this tissue (mm)\nThickness = end − start"
-        )
-        depth_row.addWidget(self.depth_spin)
-
-        mm_label = QLabel("mm")
-        mm_label.setStyleSheet("color: #4a505c;")
-        depth_row.addWidget(mm_label)
-
-        self.thickness_label = QLabel("")
-        self.thickness_label.setStyleSheet("color: #8b92a0; font-size: 11px;")
-        depth_row.addWidget(self.thickness_label)
-
-        depth_row.addStretch()
-        props.addLayout(depth_row)
+        section = QVBoxLayout()
+        section.setSpacing(4)
+        section.setContentsMargins(16, 2, 0, 2)
 
         family_row = QHBoxLayout()
         family_row.setSpacing(4)
@@ -184,20 +168,62 @@ class TissueWidget(QGroupBox):
 
         family_row.addWidget(self.family_combo)
         family_row.addStretch()
-        props.addLayout(family_row)
+        section.addLayout(family_row)
 
-        layout.addLayout(props)
+        layout.addLayout(section)
+
+    def _create_depth_section(self, layout):
+
+        container = QWidget()
+        container.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+
+        section = QVBoxLayout(container)
+        section.setSpacing(4)
+        section.setContentsMargins(16, 2, 0, 2)
+
+        depth_row = QHBoxLayout()
+        depth_row.setSpacing(4)
+
+        depth_label = QLabel("Depth:")
+        depth_label.setStyleSheet("color: #4a505c;")
+        depth_row.addWidget(depth_label)
+
+        self.start_depth_label = QLabel("0.00")
+        self.start_depth_label.setStyleSheet("color: #4a505c;")
+        depth_row.addWidget(self.start_depth_label)
+
+        arrow = QLabel("→")
+        arrow.setStyleSheet("color: #8b92a0;")
+        depth_row.addWidget(arrow)
+
+        self.depth_spin = QDoubleSpinBox()
+        self.depth_spin.setRange(0.1, 1000)
+        self.depth_spin.setDecimals(2)
+        self.depth_spin.setSingleStep(0.1)
+        self.depth_spin.setFixedWidth(80)
+        self.depth_spin.setToolTip(
+            "End depth of this tissue (mm)\nThickness = end − start"
+        )
+        depth_row.addWidget(self.depth_spin)
+
+        mm_label = QLabel("mm")
+        mm_label.setStyleSheet("color: #4a505c;")
+        depth_row.addWidget(mm_label)
+
+        self.thickness_label = QLabel("")
+        self.thickness_label.setStyleSheet("color: #8b92a0; font-size: 11px;")
+        depth_row.addWidget(self.thickness_label)
+
+        depth_row.addStretch()
+        section.addLayout(depth_row)
+
+        layout.addWidget(container)
 
     def _create_parameters_section(self, layout):
 
-        sep = QFrame()
-        sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setStyleSheet("color: #d4d6d9; margin: 2px 0;")
-        layout.addWidget(sep)
-
         self.parameters_layout = QVBoxLayout()
-        self.parameters_layout.setSpacing(3)
-        layout.addLayout(self.parameters_layout)
+        self.parameters_layout.setSpacing(8)
+        layout.addLayout(self.parameters_layout, stretch=1)
         self.rebuild_parameter_widgets()
 
     @staticmethod
@@ -296,7 +322,7 @@ class TissueWidget(QGroupBox):
                 )
 
                 outer = QVBoxLayout()
-                outer.setSpacing(1)
+                outer.setSpacing(4)
 
                 row1 = QHBoxLayout()
                 row1.setSpacing(4)
