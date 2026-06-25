@@ -36,7 +36,7 @@ class _TissueRow(QFrame):
         self.swatch.setFixedSize(14, 14)
         self.swatch.setStyleSheet(
             f"background-color: {color}; "
-            "border: 1px solid #999; border-radius: 3px;"
+            "border: 1px solid #4B4D5E; border-radius: 3px;"
         )
         row.addWidget(self.swatch)
 
@@ -54,7 +54,7 @@ class _TissueRow(QFrame):
         self.depth_label = QLabel(
             f"{start_depth:.1f}–{end_depth:.1f}"
         )
-        self.depth_label.setStyleSheet("color: #4a505c; font-size: 11px;")
+        self.depth_label.setStyleSheet("color: #63657A; font-size: 11px;")
         row.addWidget(self.depth_label)
 
         self.checkbox.toggled.connect(self._on_toggled)
@@ -79,19 +79,19 @@ class _TissueRow(QFrame):
     def _update_style(self):
         if self._selected:
             self.setStyleSheet(
-                "#TissueRow { background: palette(highlight); }"
+                "#TissueRow { background: #D4783C; border-radius: 4px; }"
             )
             self.name_label.setStyleSheet(
-                "color: palette(highlighted-text);"
+                "color: #FFFFFF; font-weight: 600;"
             )
         elif self._hovered:
             self.setStyleSheet(
-                "#TissueRow { background: #e2e4e8; }"
+                "#TissueRow { background: #2E303A; border-radius: 4px; }"
             )
-            self.name_label.setStyleSheet("")
+            self.name_label.setStyleSheet("color: #E4E5EC;")
         else:
             self.setStyleSheet("")
-            self.name_label.setStyleSheet("")
+            self.name_label.setStyleSheet("color: #E4E5EC;")
 
     def set_selected(self, selected: bool):
         self._selected = selected
@@ -116,10 +116,10 @@ class TissueListWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(1)
 
-        header = QLabel("Tissues")
+        header = QLabel("TISSUES")
         header.setStyleSheet(
-            "font-weight: bold; padding: 4px 8px; "
-            "background: #dce0e5; font-size: 12px;"
+            "font-weight: 600; padding: 6px 12px; "
+            "background: #25262E; color: #9395A8; font-size: 11px;"
         )
         layout.addWidget(header)
 

@@ -39,14 +39,86 @@ class TissueWidget(QGroupBox):
 
         self.setStyleSheet("""
             TissueWidget {
-                border: 1px solid #d4d6d9;
+                border: 1px solid #3A3B48;
                 border-radius: 4px;
-                background: #f6f7f9;
+                background: #2E303A;
                 margin: 0px;
             }
             TissueWidget QDoubleSpinBox {
-                color: #1a1d23;
-                background: #ffffff;
+                color: #E4E5EC;
+                background: #1B1C22;
+                border: 1px solid #3A3B48;
+                border-radius: 3px;
+                padding: 2px 4px;
+                font-family: "Cascadia Code", "JetBrains Mono", "Consolas", "monospace";
+                font-size: 12px;
+            }
+            TissueWidget QDoubleSpinBox:focus {
+                border-color: #D4783C;
+            }
+            TissueWidget QDoubleSpinBox:disabled {
+                color: #63657A;
+                background: #25262E;
+            }
+            TissueWidget QDoubleSpinBox::up-button,
+            TissueWidget QDoubleSpinBox::down-button {
+                width: 0px;
+                border: none;
+            }
+            TissueWidget QDoubleSpinBox::up-arrow,
+            TissueWidget QDoubleSpinBox::down-arrow {
+                width: 0px;
+                border: none;
+            }
+            TissueWidget QComboBox {
+                color: #E4E5EC;
+                background: #1B1C22;
+                border: 1px solid #3A3B48;
+                border-radius: 3px;
+                padding: 2px 8px;
+                font-size: 12px;
+                min-width: 120px;
+            }
+            TissueWidget QComboBox:focus {
+                border-color: #D4783C;
+            }
+            TissueWidget QComboBox::drop-down {
+                border: none;
+                width: 20px;
+            }
+            TissueWidget QComboBox::down-arrow {
+                image: none;
+            }
+            TissueWidget QComboBox QAbstractItemView {
+                background: #2E303A;
+                color: #E4E5EC;
+                border: 1px solid #3A3B48;
+                selection-background-color: #D4783C;
+                selection-color: #FFFFFF;
+                outline: none;
+            }
+            TissueWidget QSlider::groove:horizontal {
+                background: #3A3B48;
+                height: 6px;
+                border-radius: 3px;
+            }
+            TissueWidget QSlider::handle:horizontal {
+                background: #D4783C;
+                width: 14px;
+                height: 14px;
+                margin: -5px 0;
+                border-radius: 7px;
+            }
+            TissueWidget QSlider::handle:horizontal:hover {
+                background: #E0874F;
+            }
+            TissueWidget QSlider::sub-page:horizontal {
+                background: #D4783C;
+                border-radius: 3px;
+            }
+            TissueWidget QSlider::add-page:horizontal {
+                background: #3A3B48;
+                border-radius: 3px;
             }
         """)
 
@@ -76,7 +148,7 @@ class TissueWidget(QGroupBox):
 
         sep1 = QFrame()
         sep1.setFrameShape(QFrame.Shape.HLine)
-        sep1.setStyleSheet("color: #d4d6d9; margin: 2px 0;")
+        sep1.setStyleSheet("color: #3A3B48; margin: 4px 0;")
         layout.addWidget(sep1)
 
         self._create_family_section(layout)
@@ -85,7 +157,7 @@ class TissueWidget(QGroupBox):
 
         sep2 = QFrame()
         sep2.setFrameShape(QFrame.Shape.HLine)
-        sep2.setStyleSheet("color: #d4d6d9; margin: 2px 0;")
+        sep2.setStyleSheet("color: #3A3B48; margin: 4px 0;")
         layout.addWidget(sep2)
 
         self._create_depth_section(layout)
@@ -95,7 +167,7 @@ class TissueWidget(QGroupBox):
         header_frame = QFrame()
         header_frame.setFixedHeight(36)
         header_frame.setStyleSheet(
-            "background-color: #e8ecf2; border-radius: 3px;"
+            "background-color: #25262E; border-radius: 3px;"
         )
 
         header = QHBoxLayout(header_frame)
@@ -108,14 +180,14 @@ class TissueWidget(QGroupBox):
         swatch.setFixedSize(22, 22)
         swatch.setStyleSheet(
             f"background-color: {self.tissue.color}; "
-            "border: 2px solid #999; border-radius: 4px;"
+            "border: 2px solid #4B4D5E; border-radius: 4px;"
         )
         swatch.setToolTip(f"Color: {self.tissue.color}")
         header.addWidget(swatch)
 
         name_label = QLabel(self.tissue.name)
         name_label.setStyleSheet(
-            "font-weight: bold; font-size: 16px; color: #1a1d23;"
+            "font-weight: 600; font-size: 14px; color: #E4E5EC;"
         )
         header.addWidget(name_label)
 
@@ -133,7 +205,7 @@ class TissueWidget(QGroupBox):
         family_row.setSpacing(4)
 
         family_label = QLabel("Family:")
-        family_label.setStyleSheet("color: #4a505c;")
+        family_label.setStyleSheet("color: #9395A8; font-size: 12px;")
         family_row.addWidget(family_label)
 
         self.family_combo = QComboBox()
@@ -185,15 +257,15 @@ class TissueWidget(QGroupBox):
         depth_row.setSpacing(4)
 
         depth_label = QLabel("Depth:")
-        depth_label.setStyleSheet("color: #4a505c;")
+        depth_label.setStyleSheet("color: #9395A8; font-size: 12px;")
         depth_row.addWidget(depth_label)
 
         self.start_depth_label = QLabel("0.00")
-        self.start_depth_label.setStyleSheet("color: #4a505c;")
+        self.start_depth_label.setStyleSheet("color: #9395A8; font-size: 12px;")
         depth_row.addWidget(self.start_depth_label)
 
         arrow = QLabel("→")
-        arrow.setStyleSheet("color: #8b92a0;")
+        arrow.setStyleSheet("color: #63657A;")
         depth_row.addWidget(arrow)
 
         self.depth_spin = QDoubleSpinBox()
@@ -207,11 +279,11 @@ class TissueWidget(QGroupBox):
         depth_row.addWidget(self.depth_spin)
 
         mm_label = QLabel("mm")
-        mm_label.setStyleSheet("color: #4a505c;")
+        mm_label.setStyleSheet("color: #9395A8; font-size: 12px;")
         depth_row.addWidget(mm_label)
 
         self.thickness_label = QLabel("")
-        self.thickness_label.setStyleSheet("color: #8b92a0; font-size: 11px;")
+        self.thickness_label.setStyleSheet("color: #63657A; font-size: 11px;")
         depth_row.addWidget(self.thickness_label)
 
         depth_row.addStretch()
@@ -327,7 +399,7 @@ class TissueWidget(QGroupBox):
                 row1 = QHBoxLayout()
                 row1.setSpacing(4)
                 param_label = QLabel(param)
-                param_label.setStyleSheet("color: #4a505c;")
+                param_label.setStyleSheet("color: #9395A8; font-size: 12px;")
                 row1.addWidget(param_label)
                 row1.addWidget(spin_box)
                 row1.addWidget(delta_spin)

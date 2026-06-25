@@ -26,12 +26,16 @@ class DepthBarWidget(QWidget):
 
         painter = QPainter(self)
         rect = self.rect()
+
+        # Fondo del widget (coincide con el panel derecho)
+        painter.fillRect(rect, QColor("#25262E"))
+
         bar_rect = rect.adjusted(8, 4, -8, -14)
 
         active = [t for t in self._tissues if t.enabled]
 
         if not active:
-            painter.setPen(QColor("#4a505c"))
+            painter.setPen(QColor("#63657A"))
             painter.drawText(
                 rect, Qt.AlignmentFlag.AlignCenter,
                 "No active tissues"
@@ -68,12 +72,12 @@ class DepthBarWidget(QWidget):
             else:
                 painter.fillRect(r, color)
 
-            painter.setPen(QPen(QColor("#444"), 1))
+            painter.setPen(QPen(QColor("#3A3B48"), 1))
             painter.drawRect(r)
 
             show_label = is_hovered and w < 30
             if w > 30 or show_label:
-                painter.setPen(QColor("#222"))
+                painter.setPen(QColor("#1B1C22"))
                 text = tissue.name
 
                 max_text_w = w - 4 if w > 30 else 200
@@ -97,7 +101,7 @@ class DepthBarWidget(QWidget):
                             bar_rect.right() - label_w,
                         ),
                     )
-                    painter.setPen(QPen(QColor("#444"), 1))
+                    painter.setPen(QPen(QColor("#3A3B48"), 1))
                     painter.drawRect(
                         int(label_x), int(y - fm.height() - 4),
                         int(label_w), fm.height()
@@ -120,7 +124,7 @@ class DepthBarWidget(QWidget):
             label_w = fm.horizontalAdvance(depth_label)
             label_x = max(bar_rect.x(), x - label_w // 2)
 
-            painter.setPen(QColor("#4a505c"))
+            painter.setPen(QColor("#63657A"))
             painter.drawText(
                 int(label_x), y + h + 2,
                 int(label_w), fm.height(),
@@ -133,7 +137,7 @@ class DepthBarWidget(QWidget):
         last_depth = f"{active[-1].end_depth:.1f}"
         lw = fm.horizontalAdvance(last_depth)
         lx = min(bar_rect.right() - lw, x - lw // 2)
-        painter.setPen(QColor("#4a505c"))
+        painter.setPen(QColor("#63657A"))
         painter.drawText(
             int(lx), y + h + 2,
             int(lw), fm.height(),

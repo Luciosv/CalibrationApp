@@ -4,29 +4,44 @@
 
 ---
 
+## Design Philosophy: Instrument Panel
+
+A precision calibration workbench. The UI takes inspiration from materials testing machines and lab oscilloscopes: a high-contrast illuminated display (the plot) surrounded by a dark, focused control surface. The copper accent (#D4783C) replaces generic blue — it recalls analog chart recorders and precision measurement equipment. All numerical values render in monospace, signaling that every decimal matters. The visual hierarchy privileges the force-depth curve above all else; controls are present but recede into the dark panel.
+
+### Design decisions
+- **Dark UI, light plot**: The plot is the instrument reading. It gets the highest contrast (#F5F6FA canvas, dark grid/ticks) while the surrounding controls recede into a dark surface (#1B1C22/#25262E).
+- **Copper accent**: Not a typical UI color. Avoids the three AI-generated defaults (cream+terracotta, dark+acid, broadsheet). Evokes analog measurement equipment.
+- **Monospace for all numbers**: Every spinbox, depth label, and data point uses a monospace font. In a calibration tool where users compare decimal values, proportional numbers of different widths are harder to scan. Monospace makes "1.23" and "12.30" instantly distinguishable by width.
+- **No icon dependencies**: Toolbar uses text-only buttons instead of platform `QStyle.StandardPixmap`, ensuring identical appearance across Windows/macOS/Linux.
+
+---
+
 ## 1. Layout Architecture
 
 ```
 ┌──────────────────────────────────────────────────┐
-│  Toolbar  [Load] [Restore] │ [Send] │ [Export..] │ ● Connected  │
+│  Toolbar  Load   Restore │ Send │ Export.. │ ● C  │  bg: #1B1C22
 ├────────────────────────────┬─────────────────────┤
 │                            │  Totals info (36px) │
 │                            │  Depth bar   (36px) │
 │       Plot (2/3 width)     ├────────┬────────────┤
-│                            │ Tissue │ Detail     │
+│       bg: #F5F6FA          │ Tissue │ Detail     │
 │                            │ List   │ (Stacked)  │
-│                            │        │            │
+│                            │ bg:    │ bg:        │
+│                            │inherits │ #2E303A   │
 └──────────────────────────────────────────────────┘
 ```
 
-### Colors & Backgrounds
-- **Right panel**: `#eef0f2` background (via objectName `#rightPanel`)
-- **TissueWidget cards**: `#f6f7f9` background, `1px solid #d4d6d9` border, 4px border-radius
-- **TissueList**: no background (inherits `#eef0f2`); rows use system palette selection
+### Backgrounds
+- **Main canvas** (window background): `#1B1C22`
+- **Right panel**: `#25262E` (via objectName `#rightPanel`), left border `1px solid #3A3B48`
+- **Plot canvas**: `#F5F6FA`
+- **TissueWidget cards**: `#2E303A` background, `1px solid #3A3B48` border, 4px border-radius
+- **TissueList**: inherits `#25262E` from right panel; rows use custom selection/hover
 
 ### Ratios
 - **Plot : Right panel** = 2 : 1 (stretch factors in `QHBoxLayout`)
-- **TissueList : DetailStack** = 150 : 350 px (initial `QSplitter` sizes)
+- **TissueList : DetailStack** = 180 : 380 px (initial `QSplitter` sizes)
 
 ### Files
 | File | Role |
@@ -35,18 +50,46 @@
 | `ui/plot_widget.py` | PyQtGraph plot: curve + reference + regions |
 | `ui/tissue_widget.py` | Per-tissue editor (depth, family, params, sliders) |
 | `ui/tissue_list_widget.py` | Compact row list of all tissues (swatch + name + depth) |
-| `ui/depth_bar_widget.py` | Horizontal colored bar, proportional to thickness, clickable |
+| `ui/depth_bar_widget.py` | Horizontal colored bar, equal-width segments, clickable |
 
 ---
 
 ## 2. Color System
 
-### Tissue Colors (config/tissues.py)
+### Theme Source
+Applied via `QPalette` in `main.py` with Fusion style, plus targeted QSS overrides. The palette drives ~80% of widget colors; QSS handles the rest (borders, spinboxes, sliders, combos).
 
-Each tissue has a distinct color used in:
-- **Depth bar** (full opacity on white background)
-- **Plot regions** (alpha=40 overlay)
-- **Tissue list swatch** (12×12 QFrame)
+### Canvas & Surface
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| Canvas | `#1B1C22` | Main window background, toolbar background, spinbox input bg |
+| Surface | `#25262E` | Right panel, header frames, tissue list header, toolbar |
+| Card | `#2E303A` | TissueWidget body, tooltip background, combo dropdown |
+| Border subtle | `#3A3B48` | Card borders, separators, toolbar border-bottom, slider groove |
+| Border stroke | `#4B4D5E` | Swatch borders, plot viewport border, region dividers |
+
+### Text
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| Primary | `#E4E5EC` | Tissue names, spinbox values, totals, connection status |
+| Secondary | `#9395A8` | Labels (family, depth, parameter names) |
+| Muted | `#63657A` | Units, thickness hints, depth bar labels, disabled text |
+| On-selection | `#FFFFFF` | Text on selected row, highlighted text |
+
+### Accents
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| Copper | `#D4783C` | Fitted curve, selection highlight, slider handle, focus ring |
+| Copper hover | `#E0874F` | Slider handle hover |
+| Ref curve | `#7A7D8E` | Reference curve dashed line |
+| Grid | `#D8DAE3` | Plot grid lines |
+| Success | `#4CAF50` | Connection status "Connected" |
+| Error | `#E53935` | Connection status "Disconnected" |
+
+### Tissue Colors (unchanged, from `config/tissues.py`)
 
 ```
 Outside          #E8E0D0  warm beige
@@ -63,50 +106,43 @@ Subarachnoid     #D9D9F0  periwinkle
 
 **Rules:**
 - No two tissues share the same color
-- No pure white (`#FFFFFF`) — invisible on light backgrounds
-- All colors must be distinguishable in both full opacity and alpha=40
-- When adding a new tissue, pick a hue not already used in the list
-
-### Semantic Colors (inline)
-
-| Element | Hex | Usage | Where |
-|---------|-----|-------|-------|
-| Panel bg | `#eef0f2` | Right panel background | `main_window.py` |
-| Card bg | `#f6f7f9` | TissueWidget card background | `tissue_widget.py` |
-| Header bg | `#dce0e5` | TissueList header | `tissue_list_widget.py` |
-| Hover bg | `#e2e4e8` | TissueList row hover | `tissue_list_widget.py` |
-| Card border | `#d4d6d9` | Dividers, panel borders | various |
-| Accent blue | `#2563eb` | Fitted curve line in plot | `plot_widget.py` |
-| Ref curve | `#9ca3af` | Reference curve line | `plot_widget.py` |
-| Primary text | `#1a1d23` | Tissue names, labels | `tissue_widget.py` |
-| Secondary text | `#4a505c` | Depth labels, property labels | various |
-| Muted text | `#8b92a0` | Units, thickness hints | `tissue_widget.py` |
-| Spinbox text | `#1a1d23` | QDoubleSpinBox values | `tissue_widget.py` |
+- No pure white (`#FFFFFF`)—invisible on light plot background
+- All colors must be distinguishable in both full opacity and alpha=40 on #F5F6FA
+- When adding a new tissue, pick a hue not already used
 
 ### Plot Regions
 - Region backgrounds use tissue color at `alpha=50`
-- Dividing lines: gray dashed at `alpha=100`
-- Text labels: rotated 90°, positioned at top of region
+- Dividing lines: `#4B4D5E` dashed
+- Text labels: `#1B1C22`, rotated 90°, positioned at top of region
 
 ---
 
 ## 3. Typography
 
-| Context | Size | Weight | Color | Where |
-|---------|------|--------|-------|-------|
-| Body text | default (QWidget) | Normal | `#1a1d23` | All labels |
-| Depth bar labels | 8pt | Normal | `#4a505c` | `depth_bar_widget.py` |
-| Depth totals | 8pt | Normal | `#1a1d23` | `depth_bar_widget.py` |
-| TissueList header | 12px | Bold | `#1a1d23` | `tissue_list_widget.py` |
-| Tissue name in widget | 13px | Bold | `#1a1d23` | `tissue_widget.py` |
-| Connection status | default | Bold | green/red | `main_window.py` |
-| Property labels | default | Normal | `#4a505c` | `tissue_widget.py` |
-| Parameter labels | default | Normal | `#4a505c` | `tissue_widget.py` |
-| Muted text | 11px | Normal | `#8b92a0` | `tissue_widget.py` |
-| Depth bar labels | 8pt | Normal | `#4a505c` | `depth_bar_widget.py` |
+### Font Stack
+| Role | Faces | Fallback |
+|------|-------|----------|
+| UI labels & body | System default | Qt resolves per-platform (Segoe UI / SF Pro) |
+| **Numerical values** | `"Cascadia Code", "JetBrains Mono", "Consolas"` | `"monospace"` |
 
-- **Font**: System default (Qt resolves per-platform)
-- **No custom fonts** loaded
+### Type Scale
+
+| Context | Size | Weight | Color | Face |
+|---------|------|--------|-------|------|
+| Tissue name in widget | 14px | 600 (Semibold) | `#E4E5EC` | System |
+| Totals bar | 12px | 600 (Semibold) | `#E4E5EC` | System |
+| Toolbar buttons | 12px | 500 (Medium) | `#E4E5EC` | System |
+| Labels (family, depth, param) | 12px | 400 (Regular) | `#9395A8` | System |
+| TissueList header | 11px | 600 (Semibold) | `#9395A8` | System |
+| Muted text / units | 11px | 400 (Regular) | `#63657A` | System |
+| **Spinbox values** | **12px** | **400 (Regular)** | **`#E4E5EC`** | **Monospace** |
+| Delta spinbox prefix "Δ " | 12px | 400 | `#E4E5EC` | Monospace |
+| Depth bar segment labels | 8pt | 400 | `#1B1C22` | System |
+| Depth bar depth labels | 8pt | 400 | `#63657A` | System |
+| Connection status | 12px | 600 | `#4CAF50` / `#E53935` | System |
+
+### Signature: Monospace for Numbers
+All QDoubleSpinBox instances use a monospace font stack. This is the system's most distinctive typographic decision: in a calibration tool where users read and compare decimal values constantly, monospace makes every digit width-predictable, dramatically improving scannability of parameter values.
 
 ---
 
@@ -114,63 +150,68 @@ Subarachnoid     #D9D9F0  periwinkle
 
 ### 4.1 Toolbar
 - **File**: `main_window.py:_create_toolbar()`
-- **Style**: `ToolButtonTextBesideIcon` (icons + text)
-- **Icons**: `QStyle.StandardPixmap` (system theme)
-  - Load Reference → `SP_DialogOpenButton`
-  - Restore Defaults → `SP_RestoreDefaultsButton`
-  - Send to Unity → `SP_ArrowForward`
-  - Export JSON → `SP_DialogSaveButton`
-  - Export CSV → `SP_FileDialogDetailedView`
+- **Style**: `ToolButtonTextOnly` (no icons)
+- **Background**: `#1B1C22`, border-bottom `1px solid #3A3B48`
+- **Buttons**: Text `#E4E5EC`, transparent bg, 4px border-radius, hover → `#2E303A` + `#3A3B48` border, pressed → `#3A3B48`
+- **Separator**: `#3A3B48`, 1px, margin 4px
+- **Connection status**: Right-aligned, `● Connected` / `● Disconnected`
 - **Shortcuts**: Ctrl+S (Send), Ctrl+E (Export), Ctrl+R (Restore), Ctrl+L (Load)
 
 ### 4.2 Totals Info Bar
 - **File**: `main_window.py` (as `self.totals_label`)
-- **Height**: 36px fixed (same as DepthBar)
+- **Height**: 36px fixed
 - **Content**: `Total: X.XXmm  |  A/B active  |  MSE: X.XXXX N²`
-- **Style**: QLabel with `padding: 0 8px; color: #1a1d23; font-size: 11px; background: transparent;`
+- **Style**: QLabel `padding: 0 12px; color: #E4E5EC; font-size: 12px; font-weight: 600; background: transparent;`
 - **Alignment**: Left-aligned, vertically centered
-- **Spacing**: 0px gap from DepthBar below (stacked flush)
 
 ### 4.3 Depth Bar
 - **File**: `depth_bar_widget.py`
-- **Height**: 36px fixed
-- **Content**: Colored segments of **equal width** (1/N per active tissue, regardless of thickness)
-- **Interaction**: Click → selects tissue. Hover → tooltip + label popup for narrow segments
-- **Labels**: Depth values at each segment boundary (bottom, `#4a505c`)
-- **Small segments** (<30px): show name only on hover, as a label above the bar
+- **Height**: 36px fixed, background filled with `#25262E`
+- **Content**: Colored segments of **equal width** (1/N per active tissue)
+- **Interaction**: Click → selects tissue. Hover → lighter segment + popup label for narrow segments
+- **Segment border**: `#3A3B48`, 1px
+- **Segment text**: `#1B1C22` (dark, readable on tissue colors)
+- **Depth labels**: `#63657A` at bottom of each segment boundary
+- **Hover popup**: Rect `#3A3B48` border, text `#1B1C22`
 
 ### 4.4 Tissue List
 - **File**: `tissue_list_widget.py`
 - **Row height**: 38px fixed
 - **Row content**: [color swatch 14×14] [checkbox] [name] [start–end depth]
-- **Selection**: Click row → highlighted (system palette). Only one selected at a time.
-- **Hover**: `background: #e2e4e8` on non-selected rows
-- **Header bg**: `#dce0e5`
-- **Signal**: `tissue_selected(int)`, `tissue_toggled(int, bool)`
+- **Selection**: `background: #D4783C`, text `#FFFFFF` weight 600
+- **Hover**: `background: #2E303A`, text `#E4E5EC`
+- **Default**: transparent, text `#E4E5EC`
+- **Header**: "TISSUES", `#25262E` bg, `#9395A8` text, 11px semibold, padding 6px 12px
+- **Swatch border**: `1px solid #4B4D5E`, border-radius 3px
+- **Depth label**: `#63657A`, 11px
 
 ### 4.5 Tissue Widget (Detail View)
 - **File**: `tissue_widget.py`
-- **Parent**: QGroupBox styled as card (`border: 1px solid #d4d6d9; border-radius: 4px; background: #f6f7f9;`)
+- **Parent**: QGroupBox styled as card (`bg: #2E303A`, `border: 1px solid #3A3B48`, `border-radius: 4px`)
 - **Children**:
-  1. **Header row**: [color swatch 14×14] [tissue name (bold, `#1a1d23`)] ── [Enabled checkbox]
+  1. **Header row**: bg `#25262E`, [color swatch 22×22, border `#4B4D5E`] [name, 14px semibold `#E4E5EC`]
   2. **Properties** (indented 16px):
-     - Depth: `0.00 → [end spinbox] mm (thickness mm)` — labels `#4a505c`, units `#8b92a0`
+     - Depth: `0.00 → [end spinbox monospace] mm (thickness)` — labels `#9395A8`, units `#63657A`
      - Family: dropdown (categorized: Simple / Rupture / Polynomial / Exponential)
-  3. **Separator line** (HLine, `#d4d6d9`)
+  3. **Separator line** (HLine, `color: #3A3B48`)
   4. **Parameters**: Per-param 2 rows
-     - Row 1: `[label `#4a505c`] [value spinbox `#1a1d23`] [Δ delta]`
-     - Row 2: `[============ slider ============]`
-- **Slider**: Scaled by ×10000, range = formula bounds. Updates model on drag.
-- **Signals**: `editingFinished` on spinbox (not `valueChanged`) to avoid recalculation while typing
-- **QDoubleSpinBox**: Explicitly styled `color: #1a1d23; background: #ffffff;`
+     - Row 1: `[label #9395A8] [spinbox monospace #E4E5EC bg #1B1C22] [Δ delta spinbox]`
+     - Row 2: `[===== slider =====]`
+- **QDoubleSpinBox**: bg `#1B1C22`, border `#3A3B48`, 3px radius, monospace font, up/down arrows hidden
+- **QComboBox**: bg `#1B1C22`, border `#3A3B48`, 3px radius, dropdown bg `#2E303A`, selection `#D4783C`
+- **QSlider**: groove `#3A3B48` height 6px, handle `#D4783C` 14px circle, sub-page `#D4783C`
 
 ### 4.6 Plot
 - **File**: `plot_widget.py`
 - **Library**: PyQtGraph
-- **Content**: Fitted curve (blue, 3px), Reference curve (gray dashed, 2px)
-- **Regions**: Colored backgrounds + dashed dividing lines + rotated tissue labels
-- **Grid**: Both axes, alpha=0.2
-- **Labels**: Depth (mm) on X, Force (N) on Y
+- **Background**: `#F5F6FA`
+- **Fitted curve**: Copper `#D4783C`, 3px solid
+- **Reference curve**: `#7A7D8E`, 2px dashed
+- **Regions**: Tissue color alpha=50 bg, `#4B4D5E` dashed dividers, `#1B1C22` rotated labels
+- **Grid**: Both axes, `#D8DAE3`, 1px
+- **Axes**: Ticks/labels `#1B1C22`, axis lines `#3A3B48`
+- **Legend**: bg `#F5F6FA`, border `#3A3B48`, text `#1B1C22`
+- **Viewport border**: `#3A3B48`, 1px
 
 ---
 
@@ -199,7 +240,7 @@ TissueList click ─┘
 ### Enable/Disable Toggle
 - From TissueList checkbox → `_on_tissue_toggled(index, bool)` → model update → `update_depths()` → `refresh_everything()`
 - From TissueWidget checkbox → `_on_enabled_changed(bool)` → same chain
-- No duplicated events (deep bar ignores disabled tissues)
+- No duplicated events (depth bar ignores disabled tissues)
 
 ---
 
@@ -229,7 +270,7 @@ User input → TissueWidget signal
 
 - **Window**: Default 1600×900
 - **Plot resizes** with window (stretch factor 2)
-- **Right panel width** controlled by `mid_splitter.setSizes([150, 350])`
+- **Right panel width** controlled by `mid_splitter.setSizes([180, 380])`
 - **No mobile/responsive breakpoints** (desktop-only internal tool)
 
 ---
@@ -249,7 +290,7 @@ User input → TissueWidget signal
 2. "Compare mode" — overlay two configs
 3. Snapshot save/load (named configs)
 4. Fitting assistant — auto-tune parameters to match reference
-5. Dark mode toggle (system-wide CSS switch)
+5. Dark mode toggle (system-wide CSS switch) — now the default theme
 
 ---
 
@@ -278,7 +319,7 @@ User input → TissueWidget signal
 
 | Path | Purpose | Key Classes/Functions |
 |------|---------|----------------------|
-| `main.py` | Entry point | — |
+| `main.py` | Entry point + global theme (Fusion, QPalette, QSS) | — |
 | `config/formulas.py` | Formula definitions + registry | `FormulaDefinition`, `FORMULAS` |
 | `config/tissues.py` | Default tissue definitions | `TissueDefinition`, `DEFAULT_TISSUES` |
 | `models/parameter.py` | Parameter dataclass | `Parameter` |

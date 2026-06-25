@@ -1,12 +1,10 @@
 import os
 
-from PySide6.QtGui import QShortcut, QKeySequence, QIcon
+from PySide6.QtGui import QShortcut, QKeySequence
 
 from PySide6.QtCore import Qt
 
 from PySide6.QtWidgets import (
-    QStyle,
-
     QMainWindow,
     QWidget,
     QHBoxLayout,
@@ -121,8 +119,8 @@ class MainWindow(QMainWindow):
         right_container = QWidget()
         right_container.setObjectName("rightPanel")
         right_container.setStyleSheet(
-            "#rightPanel { border-left: 1px solid #d4d6d9; "
-            "background: #eef0f2; }"
+            "#rightPanel { border-left: 1px solid #3A3B48; "
+            "background: #25262E; }"
         )
         right_layout = QVBoxLayout(right_container)
         right_layout.setContentsMargins(0, 0, 0, 0)
@@ -131,9 +129,10 @@ class MainWindow(QMainWindow):
         self.totals_label = QLabel("")
         self.totals_label.setFixedHeight(36)
         self.totals_label.setStyleSheet(
-            "padding: 0 8px; "
-            "color: #1a1d23; "
-            "font-size: 11px; "
+            "padding: 0 12px; "
+            "color: #E4E5EC; "
+            "font-size: 12px; "
+            "font-weight: 600; "
             "background: transparent;"
         )
         self.totals_label.setAlignment(
@@ -165,7 +164,7 @@ class MainWindow(QMainWindow):
         self.detail_stack = QStackedWidget()
         self.mid_splitter.addWidget(self.detail_stack)
 
-        self.mid_splitter.setSizes([150, 350])
+        self.mid_splitter.setSizes([180, 380])
 
         right_layout.addWidget(self.mid_splitter)
 
@@ -200,24 +199,46 @@ class MainWindow(QMainWindow):
         self.addToolBar(toolbar)
 
         toolbar.setToolButtonStyle(
-            Qt.ToolButtonStyle.ToolButtonTextBesideIcon
+            Qt.ToolButtonStyle.ToolButtonTextOnly
         )
 
-        s = self.style()
+        toolbar.setStyleSheet("""
+            QToolBar {
+                background: #1B1C22;
+                border-bottom: 1px solid #3A3B48;
+                spacing: 2px;
+                padding: 2px 4px;
+            }
+            QToolButton {
+                color: #E4E5EC;
+                background: transparent;
+                border: 1px solid transparent;
+                border-radius: 4px;
+                padding: 4px 10px;
+                font-size: 12px;
+                font-weight: 500;
+            }
+            QToolButton:hover {
+                background: #2E303A;
+                border: 1px solid #3A3B48;
+            }
+            QToolButton:pressed {
+                background: #3A3B48;
+            }
+            QToolBar::separator {
+                color: #3A3B48;
+                width: 1px;
+                margin: 4px 4px;
+            }
+        """)
 
-        load_action = toolbar.addAction(
-            s.standardIcon(QStyle.StandardPixmap.SP_DialogOpenButton),
-            "Load Reference"
-        )
+        load_action = toolbar.addAction("Load Reference")
 
         load_action.triggered.connect(
             self._on_load_reference
         )
 
-        restore_action = toolbar.addAction(
-            s.standardIcon(QStyle.StandardPixmap.SP_RestoreDefaultsButton),
-            "Restore Defaults"
-        )
+        restore_action = toolbar.addAction("Restore Defaults")
 
         restore_action.triggered.connect(
             self._on_restore_defaults
@@ -225,10 +246,7 @@ class MainWindow(QMainWindow):
 
         toolbar.addSeparator()
 
-        send_action = toolbar.addAction(
-            s.standardIcon(QStyle.StandardPixmap.SP_ArrowForward),
-            "Send to Unity"
-        )
+        send_action = toolbar.addAction("Send to Unity")
 
         send_action.triggered.connect(
             self._on_send_to_unity
@@ -236,19 +254,13 @@ class MainWindow(QMainWindow):
 
         toolbar.addSeparator()
 
-        export_json_action = toolbar.addAction(
-            s.standardIcon(QStyle.StandardPixmap.SP_DialogSaveButton),
-            "Export JSON"
-        )
+        export_json_action = toolbar.addAction("Export JSON")
 
         export_json_action.triggered.connect(
             self._on_export_json
         )
 
-        export_csv_action = toolbar.addAction(
-            s.standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView),
-            "Export CSV"
-        )
+        export_csv_action = toolbar.addAction("Export CSV")
 
         export_csv_action.triggered.connect(
             self._on_export_csv
@@ -265,9 +277,11 @@ class MainWindow(QMainWindow):
             "● Disconnected"
         )
         self.connection_status.setStyleSheet(
-            "color: red; "
-            "font-weight: bold; "
-            "padding: 4px;"
+            "color: #E53935; "
+            "font-weight: 600; "
+            "padding: 4px 10px; "
+            "font-size: 12px; "
+            "background: transparent;"
         )
         toolbar.addWidget(self.connection_status)
 
@@ -375,18 +389,22 @@ class MainWindow(QMainWindow):
                 "● Connected"
             )
             self.connection_status.setStyleSheet(
-                "color: green; "
-                "font-weight: bold; "
-                "padding: 4px;"
+                "color: #4CAF50; "
+                "font-weight: 600; "
+                "padding: 4px 10px; "
+                "font-size: 12px; "
+                "background: transparent;"
             )
         else:
             self.connection_status.setText(
                 "● Disconnected"
             )
             self.connection_status.setStyleSheet(
-                "color: red; "
-                "font-weight: bold; "
-                "padding: 4px;"
+                "color: #E53935; "
+                "font-weight: 600; "
+                "padding: 4px 10px; "
+                "font-size: 12px; "
+                "background: transparent;"
             )
 
     def _load_default_reference(self):

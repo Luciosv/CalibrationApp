@@ -1,3 +1,4 @@
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 
 import pyqtgraph as pg
@@ -11,29 +12,47 @@ class PlotWidget(QWidget):
         super().__init__(parent)
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         self.plot = pg.PlotWidget()
+        self.plot.setBackground("#F5F6FA")
 
         layout.addWidget(self.plot)
-        
-        self.plot.addLegend()
 
         # Grid
         self.plot.showGrid(
             x=True,
             y=True,
-            alpha=0.2
+            alpha=0.3
         )
+
+        # Ejes
+        for axis_name in ["bottom", "left"]:
+            axis = self.plot.getAxis(axis_name)
+            axis.setTextPen(QColor("#1B1C22"))
+            axis.setPen(QColor("#3A3B48"))
 
         # Etiquetas
         self.plot.setLabel(
             "bottom",
-            "Depth (mm)"
+            "Depth (mm)",
         )
 
         self.plot.setLabel(
             "left",
-            "Force (N)"
+            "Force (N)",
+        )
+
+        # Leyenda
+        legend = self.plot.addLegend(
+            brush="#F5F6FA",
+            pen=pg.mkPen("#3A3B48", width=1),
+        )
+        legend.setLabelTextColor("#1B1C22")
+
+        # Borde del viewport
+        self.plot.getPlotItem().getViewBox().setBorder(
+            pg.mkPen("#3A3B48", width=1)
         )
 
         # Curva principal
@@ -42,18 +61,18 @@ class PlotWidget(QWidget):
             [],
             name="Fitted curve",
             pen=pg.mkPen(
-                "#3b82f6",
+                "#D4783C",
                 width=3
             )
         )
-        
+
         # Curva de referencia
         self.reference_curve_item = self.plot.plot(
             [],
             [],
             name="Reference curve",
             pen=pg.mkPen(
-                (156, 163, 175),
+                "#7A7D8E",
                 width=2,
                 style=pg.QtCore.Qt.DashLine
             )
@@ -170,7 +189,7 @@ class PlotWidget(QWidget):
                 pos=end,
                 angle=90,
                 pen=pg.mkPen(
-                    (180, 180, 180, 100),
+                    "#4B4D5E",
                     width=1,
                     style=pg.QtCore.Qt.DashLine
                 )
@@ -184,7 +203,8 @@ class PlotWidget(QWidget):
 
             text = pg.TextItem(
                 text=region["name"],
-                anchor=(0.5, 0)
+                anchor=(0.5, 0),
+                color="#1B1C22",
             )
 
             text.setRotation(90)
