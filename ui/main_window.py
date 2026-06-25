@@ -126,7 +126,20 @@ class MainWindow(QMainWindow):
         )
         right_layout = QVBoxLayout(right_container)
         right_layout.setContentsMargins(0, 0, 0, 0)
-        right_layout.setSpacing(3)
+        right_layout.setSpacing(0)
+
+        self.totals_label = QLabel("")
+        self.totals_label.setFixedHeight(36)
+        self.totals_label.setStyleSheet(
+            "padding: 0 8px; "
+            "color: #1a1d23; "
+            "font-size: 11px; "
+            "background: transparent;"
+        )
+        self.totals_label.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
+        right_layout.addWidget(self.totals_label)
 
         self.depth_bar = DepthBarWidget(
             self.config.tissues
@@ -347,7 +360,13 @@ class MainWindow(QMainWindow):
             except Exception:
                 mse_text = "MSE: ---"
 
-        self.depth_bar.set_totals(total_depth, active, total, mse_text)
+        totals_parts = [
+            f"Total: {total_depth:.2f}mm",
+            f"{active}/{total} active"
+        ]
+        if mse_text:
+            totals_parts.append(mse_text)
+        self.totals_label.setText("   |   ".join(totals_parts))
 
     def _update_connection_status(self):
 

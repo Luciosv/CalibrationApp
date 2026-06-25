@@ -10,8 +10,8 @@
 ┌──────────────────────────────────────────────────┐
 │  Toolbar  [Load] [Restore] │ [Send] │ [Export..] │ ● Connected  │
 ├────────────────────────────┬─────────────────────┤
-│                            │  Depth bar (36px)   │
-│                            │  Total: 31.1mm 9/10 │
+│                            │  Totals info (36px) │
+│                            │  Depth bar   (36px) │
 │       Plot (2/3 width)     ├────────┬────────────┤
 │                            │ Tissue │ Detail     │
 │                            │ List   │ (Stacked)  │
@@ -123,13 +123,20 @@ Subarachnoid     #D9D9F0  periwinkle
   - Export CSV → `SP_FileDialogDetailedView`
 - **Shortcuts**: Ctrl+S (Send), Ctrl+E (Export), Ctrl+R (Restore), Ctrl+L (Load)
 
-### 4.2 Depth Bar (replaces old Totals Bar)
+### 4.2 Totals Info Bar
+- **File**: `main_window.py` (as `self.totals_label`)
+- **Height**: 36px fixed (same as DepthBar)
+- **Content**: `Total: X.XXmm  |  A/B active  |  MSE: X.XXXX N²`
+- **Style**: QLabel with `padding: 0 8px; color: #1a1d23; font-size: 11px; background: transparent;`
+- **Alignment**: Left-aligned, vertically centered
+- **Spacing**: 0px gap from DepthBar below (stacked flush)
+
+### 4.3 Depth Bar
 - **File**: `depth_bar_widget.py`
 - **Height**: 36px fixed
 - **Content**: Colored segments of **equal width** (1/N per active tissue, regardless of thickness)
 - **Interaction**: Click → selects tissue. Hover → tooltip + label popup for narrow segments
 - **Labels**: Depth values at each segment boundary (bottom, `#4a505c`)
-- **Total overlay**: Right-aligned text `Total: X.XXmm  A/B  MSE: ...` drawn in `#1a1d23` at bottom of bar (via `set_totals()`)
 - **Small segments** (<30px): show name only on hover, as a label above the bar
 
 ### 4.4 Tissue List

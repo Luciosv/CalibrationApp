@@ -16,17 +16,9 @@ class DepthBarWidget(QWidget):
         self.setMouseTracking(True)
 
         self._hovered_index = -1
-        self._totals_text = ""
 
     def update_tissues(self, tissues: list):
         self._tissues = tissues
-        self.update()
-
-    def set_totals(self, total_depth: float, active: int, total: int, mse: str = ""):
-        parts = [f"Total: {total_depth:.2f}mm", f"{active}/{total}"]
-        if mse:
-            parts.append(mse)
-        self._totals_text = "  ".join(parts)
         self.update()
 
     def paintEvent(self, event):
@@ -138,41 +130,16 @@ class DepthBarWidget(QWidget):
 
             x += w
 
-        label_y = y + h + 2
-        label_h = fm.height()
-
         last_depth = f"{active[-1].end_depth:.1f}"
         lw = fm.horizontalAdvance(last_depth)
         lx = min(bar_rect.right() - lw, x - lw // 2)
-
-        totals_w = fm.horizontalAdvance(self._totals_text) + 8 if self._totals_text else 0
-        depth_right_edge = lx + lw
-        total_x = bar_rect.right()
-
-        if totals_w > 0 and depth_right_edge > total_x - totals_w:
-            painter.setPen(QColor("#4a505c"))
-            painter.drawText(
-                int(total_x - totals_w), label_y,
-                int(totals_w), label_h,
-                Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
-                self._totals_text,
-            )
-        else:
-            painter.setPen(QColor("#4a505c"))
-            painter.drawText(
-                int(lx), label_y,
-                int(lw), label_h,
-                Qt.AlignmentFlag.AlignLeft,
-                last_depth,
-            )
-            if self._totals_text:
-                painter.setPen(QColor("#1a1d23"))
-                painter.drawText(
-                    int(total_x - totals_w + 8), label_y,
-                    int(totals_w), label_h,
-                    Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
-                    self._totals_text,
-                )
+        painter.setPen(QColor("#4a505c"))
+        painter.drawText(
+            int(lx), y + h + 2,
+            int(lw), fm.height(),
+            Qt.AlignmentFlag.AlignLeft,
+            last_depth,
+        )
 
         painter.end()
 
