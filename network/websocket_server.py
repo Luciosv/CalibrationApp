@@ -1,5 +1,7 @@
 import json
 import logging
+import socket
+import threading
 
 from PySide6.QtCore import (
     QObject,
@@ -20,6 +22,20 @@ from utils.json_manager import JsonManager
 
 
 logger = logging.getLogger(__name__)
+
+DISCOVERY_PORT = 8766
+
+
+def _get_local_ip() -> str:
+    """Return the LAN IP used for outbound traffic (not 127.0.0.1)."""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
 
 
 class WebSocketServer(QObject):
@@ -45,6 +61,7 @@ class WebSocketServer(QObject):
         )
 
         self._clients: list[QWebSocket] = []
+        self._broadcast_stop = threading.Event()
 
         self._server.newConnection.connect(
             self._on_new_connection
@@ -57,15 +74,16 @@ class WebSocketServer(QObject):
     def start(self) -> bool:
 
         result = self._server.listen(
-            QHostAddress.LocalHost,
+            QHostAddress.AnyIPv4,
             self.port,
         )
 
         if result:
+            ip = _get_local_ip()
             logger.info(
-                "Server listening on "
-                f"ws://localhost:{self.port}"
+                f"Server listening on ws://{ip}:{self.port} (all interfaces)"
             )
+            self._start_broadcaster()
         else:
             logger.error(
                 f"Failed to start: "
@@ -75,6 +93,8 @@ class WebSocketServer(QObject):
         return result
 
     def stop(self):
+
+        self._broadcast_stop.set()
 
         for client in list(self._clients):
             client.close()
@@ -130,6 +150,25 @@ class WebSocketServer(QObject):
     # --------------------------------------------------
     # Conexiones
     # --------------------------------------------------
+
+    def _start_broadcaster(self):
+        """Broadcast UDP beacons so Unity auto-discovers this server's IP and port."""
+        self._broadcast_stop.clear()
+        payload = json.dumps(
+            {"service": "CalibrationApp", "port": self.port}
+        ).encode()
+
+        def _loop():
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            while not self._broadcast_stop.wait(2.0):
+                try:
+                    sock.sendto(payload, ("255.255.255.255", DISCOVERY_PORT))
+                except Exception:
+                    pass
+            sock.close()
+
+        threading.Thread(target=_loop, daemon=True, name="WSBroadcaster").start()
 
     def _on_new_connection(self):
 
