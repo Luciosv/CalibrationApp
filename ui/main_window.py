@@ -489,6 +489,9 @@ class MainWindow(QMainWindow):
                 if ref_tissue is None:
                     continue
 
+                original_thickness = self.reference_manager.get_original_thickness(tissue.name)
+                if original_thickness is not None:
+                    tissue.thickness = original_thickness
                 tissue.family = ref_tissue.family
 
                 tissue.parameters = [

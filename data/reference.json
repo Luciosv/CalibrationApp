@@ -25,7 +25,7 @@
     ],
     "z_width_mm": 3.2
   },
-  "Supraspinous Lig": {
+  "Supraspinous Lig.": {
     "family": "saturating_exp",
     "params": [
       4.002895189,
@@ -34,7 +34,7 @@
     ],
     "z_width_mm": 3.0
   },
-  "Interspinous Lig": {
+  "Interspinous Lig.": {
     "family": "linear",
     "params": [
       5.4999999999,

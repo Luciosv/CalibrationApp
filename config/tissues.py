@@ -36,13 +36,13 @@ DEFAULT_TISSUES = [
         color="#7FB8E0",
     ),
     TissueDefinition(
-        name="Supraspinous Lig",
+        name="Supraspinous Lig.",
         default_thickness=5.0,
         default_family="saturating_exp",
         color="#FDBF6F",
     ),
     TissueDefinition(
-        name="Interspinous Lig",
+        name="Interspinous Lig.",
         default_thickness=1.0,
         default_family="linear",
         color="#B2DF8A",

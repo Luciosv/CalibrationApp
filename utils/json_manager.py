@@ -27,6 +27,7 @@ class JsonManager:
             data[tissue.name] = {
                 "family": tissue.family,
                 "params": tissue.parameter_values,
+                "z_width_mm": tissue.thickness,
             }
 
         return data
@@ -116,6 +117,9 @@ class JsonManager:
             family = tissue_data["family"]
 
             tissue.family = family
+
+            if "z_width_mm" in tissue_data:
+                tissue.thickness = tissue_data["z_width_mm"]
 
             param_names = (
                 FORMULAS[family]

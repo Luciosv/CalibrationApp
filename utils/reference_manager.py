@@ -9,12 +9,21 @@ class ReferenceManager:
 
     def __init__(self):
         self.reference_config: SimulationConfig | None = None
+        self._original_thicknesses: dict[str, float] = {}
 
     def load_reference(self, path: str):
         self.reference_config = JsonManager.load_config(
             path,
             disable_missing=True,
         )
+        # Snapshot thicknesses before sync_from_config overwrites them.
+        self._original_thicknesses = {
+            t.name: t.thickness
+            for t in self.reference_config.tissues
+        }
+
+    def get_original_thickness(self, name: str) -> float | None:
+        return self._original_thicknesses.get(name)
 
     def sync_from_config(
         self,
